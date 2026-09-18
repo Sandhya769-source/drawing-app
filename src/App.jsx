@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import {
   FaBrush,
+  FaPencilAlt,
   FaEraser,
   FaFillDrip,
+  FaMinus,
   FaUndo,
   FaRedo,
   FaTrash,
   FaDownload,
   FaPalette,
   FaPlus,
-  FaMinus,
+  FaSlash,
+  FaSquare,
+  FaCircle,
+  FaArrowRight,
 } from "react-icons/fa";
 import "./App.css";
 
@@ -20,7 +25,6 @@ function App() {
   const [brushSize, setBrushSize] = useState(5);
   const [tool, setTool] = useState("brush");
 
-  // History
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -29,26 +33,81 @@ function App() {
 
   const isDrawing = useRef(false);
 
-  /* ================= INITIAL CANVAS ================= */
+  // Used for shape drawing
+  const startPoint = useRef({ x: 0, y: 0 });
+  const previewImage = useRef(null);
+
+  const presetColors = [
+    "#111827",
+    "#ef4444",
+    "#f97316",
+    "#eab308",
+    "#22c55e",
+    "#06b6d4",
+    "#3b82f6",
+    "#8b5cf6",
+    "#ec4899",
+    "#ffffff",
+    "#6b7280",
+    "#000000",
+  ];
+
+  // --------------------------------------------------
+  // CANVAS INITIALIZATION
+  // --------------------------------------------------
 
   useEffect(() => {
     const canvas = canvasRef.current;
 
     if (!canvas) return;
 
-    const context = canvas.getContext("2d");
+    const resizeCanvas = () => {
+      const existingImage = canvas.toDataURL();
+
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const image = new Image();
+
+      image.onload = () => {
+        if (existingImage !== "data:,") {
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        }
+      };
+
+      image.src = existingImage;
+    };
 
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
-    context.fillStyle = "#ffffff";
+    const ctx = canvas.getContext("2d");
 
-    context.fillRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    saveInitialState();
+
+    window.addEventListener("resize", resizeCanvas);
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, []);
+
+  // --------------------------------------------------
+  // HISTORY
+  // --------------------------------------------------
+
+  const saveInitialState = () => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) return;
 
     const initialState = canvas.toDataURL();
 
@@ -57,9 +116,7 @@ function App() {
 
     setHistory([initialState]);
     setHistoryIndex(0);
-  }, []);
-
-  /* ================= SAVE CANVAS STATE ================= */
+  };
 
   const saveState = () => {
     const canvas = canvasRef.current;
@@ -68,68 +125,48 @@ function App() {
 
     const newState = canvas.toDataURL();
 
-    const currentHistory = historyRef.current;
-    const currentIndex = historyIndexRef.current;
+    let newHistory = historyRef.current.slice(
+      0,
+      historyIndexRef.current + 1
+    );
 
-    // Remove redo states
-    let updatedHistory = [
-      ...currentHistory.slice(0, currentIndex + 1),
-      newState,
-    ];
+    newHistory.push(newState);
 
-    // Maximum 30 states
-    if (updatedHistory.length > 30) {
-      updatedHistory = updatedHistory.slice(-30);
+    // Keep maximum 30 history states
+    if (newHistory.length > 30) {
+      newHistory = newHistory.slice(newHistory.length - 30);
     }
 
-    const newIndex = updatedHistory.length - 1;
+    const newIndex = newHistory.length - 1;
 
-    historyRef.current = updatedHistory;
+    historyRef.current = newHistory;
     historyIndexRef.current = newIndex;
 
-    setHistory(updatedHistory);
+    setHistory(newHistory);
     setHistoryIndex(newIndex);
   };
 
-  /* ================= RESTORE STATE ================= */
-
-  const restoreState = (imageData) => {
+  const restoreState = (state) => {
     const canvas = canvasRef.current;
 
-    if (!canvas || !imageData) return;
+    if (!canvas || !state) return;
 
-    const context = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
     const image = new Image();
 
     image.onload = () => {
-      context.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      context.drawImage(
-        image,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     };
 
-    image.src = imageData;
+    image.src = state;
   };
 
-  /* ================= UNDO ================= */
-
   const undo = () => {
-    const currentIndex = historyIndexRef.current;
+    if (historyIndexRef.current <= 0) return;
 
-    if (currentIndex <= 0) return;
-
-    const newIndex = currentIndex - 1;
+    const newIndex = historyIndexRef.current - 1;
 
     historyIndexRef.current = newIndex;
 
@@ -138,19 +175,12 @@ function App() {
     restoreState(historyRef.current[newIndex]);
   };
 
-  /* ================= REDO ================= */
-
   const redo = () => {
-    const currentIndex = historyIndexRef.current;
-
-    if (
-      currentIndex >=
-      historyRef.current.length - 1
-    ) {
+    if (historyIndexRef.current >= historyRef.current.length - 1) {
       return;
     }
 
-    const newIndex = currentIndex + 1;
+    const newIndex = historyIndexRef.current + 1;
 
     historyIndexRef.current = newIndex;
 
@@ -159,11 +189,12 @@ function App() {
     restoreState(historyRef.current[newIndex]);
   };
 
-  /* ================= CANVAS POSITION ================= */
+  // --------------------------------------------------
+  // GET CANVAS POSITION
+  // --------------------------------------------------
 
-  const getPosition = (event) => {
+  const getCanvasPosition = (event) => {
     const canvas = canvasRef.current;
-
     const rect = canvas.getBoundingClientRect();
 
     return {
@@ -172,80 +203,261 @@ function App() {
     };
   };
 
-  /* ================= START DRAWING ================= */
+  // --------------------------------------------------
+  // START DRAWING
+  // --------------------------------------------------
 
   const startDrawing = (event) => {
     const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-    if (!canvas) return;
+    const { x, y } = getCanvasPosition(event);
 
-    // Fill tool works with a single click
+    // Fill tool
     if (tool === "fill") {
-      const { x, y } = getPosition(event);
-
-      floodFill(
-        Math.floor(x),
-        Math.floor(y)
-      );
-
+      floodFill(x, y);
       return;
     }
 
-    const context = canvas.getContext("2d");
-
-    const { x, y } = getPosition(event);
-
     isDrawing.current = true;
 
-    context.beginPath();
-    context.moveTo(x, y);
+    startPoint.current = { x, y };
+
+    // Save current canvas before drawing shape
+    if (
+      tool === "line" ||
+      tool === "rectangle" ||
+      tool === "circle" ||
+      tool === "arrow"
+    ) {
+      previewImage.current = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    if (tool === "eraser") {
+      ctx.globalCompositeOperation = "destination-out";
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+    }
+
+    // Pencil uses a smaller, harder line
+    if (tool === "pencil") {
+      ctx.lineWidth = Math.max(1, brushSize / 2);
+    }
   };
 
-  /* ================= DRAW ================= */
+  // --------------------------------------------------
+  // DRAW
+  // --------------------------------------------------
 
   const draw = (event) => {
     if (!isDrawing.current) return;
 
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-    const { x, y } = getPosition(event);
+    const { x, y } = getCanvasPosition(event);
 
-    context.lineWidth = brushSize;
-
-    context.lineCap = "round";
-    context.lineJoin = "round";
-
-    if (tool === "eraser") {
-      context.strokeStyle = "#ffffff";
-    } else {
-      context.strokeStyle = color;
+    // Brush / Pencil / Eraser
+    if (
+      tool === "brush" ||
+      tool === "pencil" ||
+      tool === "eraser"
+    ) {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      return;
     }
 
-    context.lineTo(x, y);
-    context.stroke();
+    // Shape preview
+    if (
+      tool === "line" ||
+      tool === "rectangle" ||
+      tool === "circle" ||
+      tool === "arrow"
+    ) {
+      // Restore original canvas before drawing preview
+      if (previewImage.current) {
+        ctx.putImageData(previewImage.current, 0, 0);
+      }
+
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      if (tool === "line") {
+        drawLine(ctx, startPoint.current.x, startPoint.current.y, x, y);
+      }
+
+      if (tool === "rectangle") {
+        drawRectangle(
+          ctx,
+          startPoint.current.x,
+          startPoint.current.y,
+          x,
+          y
+        );
+      }
+
+      if (tool === "circle") {
+        drawCircle(
+          ctx,
+          startPoint.current.x,
+          startPoint.current.y,
+          x,
+          y
+        );
+      }
+
+      if (tool === "arrow") {
+        drawArrow(
+          ctx,
+          startPoint.current.x,
+          startPoint.current.y,
+          x,
+          y
+        );
+      }
+    }
   };
 
-  /* ================= STOP DRAWING ================= */
+  // --------------------------------------------------
+  // STOP DRAWING
+  // --------------------------------------------------
 
   const stopDrawing = () => {
     if (!isDrawing.current) return;
 
     isDrawing.current = false;
 
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    ctx.closePath();
+
+    ctx.globalCompositeOperation = "source-over";
+
     saveState();
+
+    previewImage.current = null;
   };
 
-  /* ================= FLOOD FILL ================= */
+  // --------------------------------------------------
+  // LINE
+  // --------------------------------------------------
+
+  const drawLine = (ctx, startX, startY, endX, endY) => {
+    ctx.beginPath();
+
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+
+    ctx.stroke();
+  };
+
+  // --------------------------------------------------
+  // RECTANGLE
+  // --------------------------------------------------
+
+  const drawRectangle = (ctx, startX, startY, endX, endY) => {
+    const width = endX - startX;
+    const height = endY - startY;
+
+    ctx.beginPath();
+
+    ctx.rect(startX, startY, width, height);
+
+    ctx.stroke();
+  };
+
+  // --------------------------------------------------
+  // CIRCLE
+  // --------------------------------------------------
+
+  const drawCircle = (ctx, startX, startY, endX, endY) => {
+    const radiusX = Math.abs(endX - startX) / 2;
+    const radiusY = Math.abs(endY - startY) / 2;
+
+    const centerX = (startX + endX) / 2;
+    const centerY = (startY + endY) / 2;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      centerX,
+      centerY,
+      radiusX,
+      radiusY,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.stroke();
+  };
+
+  // --------------------------------------------------
+  // ARROW
+  // --------------------------------------------------
+
+  const drawArrow = (ctx, startX, startY, endX, endY) => {
+    const headLength = Math.max(10, brushSize * 4);
+
+    const angle = Math.atan2(endY - startY, endX - startX);
+
+    // Main line
+    ctx.beginPath();
+
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+
+    ctx.stroke();
+
+    // Arrow head
+    ctx.beginPath();
+
+    ctx.moveTo(endX, endY);
+
+    ctx.lineTo(
+      endX - headLength * Math.cos(angle - Math.PI / 6),
+      endY - headLength * Math.sin(angle - Math.PI / 6)
+    );
+
+    ctx.moveTo(endX, endY);
+
+    ctx.lineTo(
+      endX - headLength * Math.cos(angle + Math.PI / 6),
+      endY - headLength * Math.sin(angle + Math.PI / 6)
+    );
+
+    ctx.stroke();
+  };
+
+  // --------------------------------------------------
+  // FLOOD FILL
+  // --------------------------------------------------
 
   const floodFill = (startX, startY) => {
     const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-    if (!canvas) return;
-
-    const context = canvas.getContext("2d");
-
-    const imageData = context.getImageData(
+    const imageData = ctx.getImageData(
       0,
       0,
       canvas.width,
@@ -254,21 +466,10 @@ function App() {
 
     const pixels = imageData.data;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const x = Math.floor(startX);
+    const y = Math.floor(startY);
 
-    // Make sure the click is inside the canvas
-    if (
-      startX < 0 ||
-      startX >= width ||
-      startY < 0 ||
-      startY >= height
-    ) {
-      return;
-    }
-
-    const startIndex =
-      (startY * width + startX) * 4;
+    const startIndex = (y * canvas.width + x) * 4;
 
     const targetColor = {
       r: pixels[startIndex],
@@ -277,12 +478,8 @@ function App() {
       a: pixels[startIndex + 3],
     };
 
-    // Convert selected hex color to RGB
     const fillColor = hexToRgb(color);
 
-    if (!fillColor) return;
-
-    // Don't fill if selected color is already the same
     if (
       targetColor.r === fillColor.r &&
       targetColor.g === fillColor.g &&
@@ -292,7 +489,7 @@ function App() {
       return;
     }
 
-    const matchesTargetColor = (index) => {
+    const pixelMatches = (index) => {
       return (
         pixels[index] === targetColor.r &&
         pixels[index + 1] === targetColor.g &&
@@ -301,90 +498,72 @@ function App() {
       );
     };
 
-    const setPixelColor = (index) => {
-      pixels[index] = fillColor.r;
-      pixels[index + 1] = fillColor.g;
-      pixels[index + 2] = fillColor.b;
-      pixels[index + 3] = 255;
-    };
-
-    const stack = [
-      [startX, startY],
-    ];
+    const stack = [[x, y]];
 
     while (stack.length > 0) {
-      const [x, y] = stack.pop();
+      const [currentX, currentY] = stack.pop();
 
       if (
-        x < 0 ||
-        x >= width ||
-        y < 0 ||
-        y >= height
+        currentX < 0 ||
+        currentX >= canvas.width ||
+        currentY < 0 ||
+        currentY >= canvas.height
       ) {
         continue;
       }
 
       const index =
-        (y * width + x) * 4;
+        (currentY * canvas.width + currentX) * 4;
 
-      if (!matchesTargetColor(index)) {
+      if (!pixelMatches(index)) {
         continue;
       }
 
-      setPixelColor(index);
+      pixels[index] = fillColor.r;
+      pixels[index + 1] = fillColor.g;
+      pixels[index + 2] = fillColor.b;
+      pixels[index + 3] = 255;
 
-      stack.push([x + 1, y]);
-      stack.push([x - 1, y]);
-      stack.push([x, y + 1]);
-      stack.push([x, y - 1]);
+      stack.push([currentX + 1, currentY]);
+      stack.push([currentX - 1, currentY]);
+      stack.push([currentX, currentY + 1]);
+      stack.push([currentX, currentY - 1]);
     }
 
-    context.putImageData(
-      imageData,
-      0,
-      0
-    );
+    ctx.putImageData(imageData, 0, 0);
 
     saveState();
   };
 
-  /* ================= HEX TO RGB ================= */
+  // --------------------------------------------------
+  // HEX TO RGB
+  // --------------------------------------------------
 
   const hexToRgb = (hex) => {
     const cleanHex = hex.replace("#", "");
 
-    if (cleanHex.length !== 6) {
-      return null;
-    }
+    const bigint = parseInt(cleanHex, 16);
 
     return {
-      r: parseInt(
-        cleanHex.substring(0, 2),
-        16
-      ),
-      g: parseInt(
-        cleanHex.substring(2, 4),
-        16
-      ),
-      b: parseInt(
-        cleanHex.substring(4, 6),
-        16
-      ),
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255,
     };
   };
 
-  /* ================= CLEAR CANVAS ================= */
+  // --------------------------------------------------
+  // CLEAR CANVAS
+  // --------------------------------------------------
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-    if (!canvas) return;
+    ctx.globalCompositeOperation = "source-over";
 
-    const context = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
 
-    context.fillStyle = "#ffffff";
-
-    context.fillRect(
+    ctx.fillRect(
       0,
       0,
       canvas.width,
@@ -394,183 +573,278 @@ function App() {
     saveState();
   };
 
-  /* ================= DOWNLOAD ================= */
+  // --------------------------------------------------
+  // DOWNLOAD
+  // --------------------------------------------------
 
-  const downloadDrawing = () => {
+  const downloadCanvas = () => {
     const canvas = canvasRef.current;
-
-    if (!canvas) return;
 
     const link = document.createElement("a");
 
-    link.download = "my-drawing.png";
+    link.download = "drawly-drawing.png";
 
-    link.href =
-      canvas.toDataURL("image/png");
+    link.href = canvas.toDataURL("image/png");
 
     link.click();
   };
 
-  /* ================= BRUSH SIZE ================= */
+  // --------------------------------------------------
+  // TOOL BUTTON
+  // --------------------------------------------------
 
-  const increaseBrush = () => {
-    setBrushSize((size) =>
-      Math.min(size + 2, 50)
+  const selectTool = (selectedTool) => {
+    setTool(selectedTool);
+  };
+
+  // --------------------------------------------------
+  // BRUSH SIZE
+  // --------------------------------------------------
+
+  const decreaseBrushSize = () => {
+    setBrushSize((previous) =>
+      Math.max(1, previous - 1)
     );
   };
 
-  const decreaseBrush = () => {
-    setBrushSize((size) =>
-      Math.max(size - 2, 1)
+  const increaseBrushSize = () => {
+    setBrushSize((previous) =>
+      Math.min(50, previous + 1)
     );
   };
 
-  /* ================= PRESET COLORS ================= */
+  // --------------------------------------------------
+  // TOOL STATUS
+  // --------------------------------------------------
 
-  const presetColors = [
-    "#111827",
-    "#ef4444",
-    "#f97316",
-    "#f59e0b",
-    "#eab308",
-    "#22c55e",
-    "#14b8a6",
-    "#06b6d4",
-    "#3b82f6",
-    "#6366f1",
-    "#8b5cf6",
-    "#ec4899",
-  ];
+  const getToolStatus = () => {
+    switch (tool) {
+      case "pencil":
+        return "Pencil ready";
+
+      case "brush":
+        return "Brush ready";
+
+      case "eraser":
+        return "Eraser ready";
+
+      case "fill":
+        return "Fill ready";
+
+      case "line":
+        return "Line ready";
+
+      case "rectangle":
+        return "Rectangle ready";
+
+      case "circle":
+        return "Circle ready";
+
+      case "arrow":
+        return "Arrow ready";
+
+      default:
+        return "Ready to draw";
+    }
+  };
 
   return (
     <div className="app">
 
-      {/* ================= HEADER ================= */}
+      {/* ============================================
+          HEADER
+      ============================================ */}
 
       <header className="header">
-
-        <div className="logo-section">
-
-          <div className="logo-icon">
+        <div className="brand">
+          <div className="logo">
             <FaBrush />
           </div>
 
           <div>
             <h1>Drawly</h1>
-            <p>Creative Drawing Studio</p>
+            <p>Simple. Creative. Yours.</p>
           </div>
-
         </div>
 
         <div className="header-actions">
-
           <button
-            className="clear-btn"
-            onClick={clearCanvas}
+            className="icon-button"
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            title="Undo"
           >
-            <FaTrash />
-            <span>Clear</span>
+            <FaUndo />
           </button>
 
           <button
-            className="download-btn"
-            onClick={downloadDrawing}
+            className="icon-button"
+            onClick={redo}
+            disabled={
+              historyIndex >= history.length - 1
+            }
+            title="Redo"
+          >
+            <FaRedo />
+          </button>
+
+          <button
+            className="download-button"
+            onClick={downloadCanvas}
           >
             <FaDownload />
-            <span>Download</span>
+            Download
           </button>
-
         </div>
-
       </header>
 
-      {/* ================= MAIN ================= */}
+      {/* ============================================
+          MAIN
+      ============================================ */}
 
-      <main className="drawing-area">
+      <main className="main-container">
 
-        {/* ================= TOOLBAR ================= */}
+        {/* ==========================================
+            TOOLBAR
+        ========================================== */}
 
         <aside className="toolbar">
 
-          {/* TOOLS */}
+          {/* Tools */}
 
-          <div className="tool-group">
+          <div className="toolbar-section">
 
-            <h3>TOOLS</h3>
+            <div className="section-title">
+              <span>Tools</span>
+            </div>
 
-            {/* BRUSH */}
+            <div className="tool-grid">
 
-            <button
-              className={`tool-btn ${
-                tool === "brush"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setTool("brush")
-              }
-            >
-              <FaBrush />
-              <span>Brush</span>
-            </button>
+              {/* Pencil */}
 
-            {/* ERASER */}
+              <button
+                className={`tool-button ${
+                  tool === "pencil" ? "active" : ""
+                }`}
+                onClick={() => selectTool("pencil")}
+              >
+                <FaPencilAlt />
+                <span>Pencil</span>
+              </button>
 
-            <button
-              className={`tool-btn ${
-                tool === "eraser"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setTool("eraser")
-              }
-            >
-              <FaEraser />
-              <span>Eraser</span>
-            </button>
+              {/* Brush */}
 
-            {/* FILL */}
+              <button
+                className={`tool-button ${
+                  tool === "brush" ? "active" : ""
+                }`}
+                onClick={() => selectTool("brush")}
+              >
+                <FaBrush />
+                <span>Brush</span>
+              </button>
 
-            <button
-              className={`tool-btn ${
-                tool === "fill"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setTool("fill")
-              }
-            >
-              <FaFillDrip />
-              <span>Fill</span>
-            </button>
+              {/* Eraser */}
+
+              <button
+                className={`tool-button ${
+                  tool === "eraser" ? "active" : ""
+                }`}
+                onClick={() => selectTool("eraser")}
+              >
+                <FaEraser />
+                <span>Eraser</span>
+              </button>
+
+              {/* Fill */}
+
+              <button
+                className={`tool-button ${
+                  tool === "fill" ? "active" : ""
+                }`}
+                onClick={() => selectTool("fill")}
+              >
+                <FaFillDrip />
+                <span>Fill</span>
+              </button>
+
+              {/* Line */}
+
+              <button
+                className={`tool-button ${
+                  tool === "line" ? "active" : ""
+                }`}
+                onClick={() => selectTool("line")}
+              >
+                <FaSlash />
+                <span>Line</span>
+              </button>
+
+              {/* Rectangle */}
+
+              <button
+                className={`tool-button ${
+                  tool === "rectangle" ? "active" : ""
+                }`}
+                onClick={() =>
+                  selectTool("rectangle")
+                }
+              >
+                <FaSquare />
+                <span>Rectangle</span>
+              </button>
+
+              {/* Circle */}
+
+              <button
+                className={`tool-button ${
+                  tool === "circle" ? "active" : ""
+                }`}
+                onClick={() => selectTool("circle")}
+              >
+                <FaCircle />
+                <span>Circle</span>
+              </button>
+
+              {/* Arrow */}
+
+              <button
+                className={`tool-button ${
+                  tool === "arrow" ? "active" : ""
+                }`}
+                onClick={() => selectTool("arrow")}
+              >
+                <FaArrowRight />
+                <span>Arrow</span>
+              </button>
+
+            </div>
 
           </div>
 
-          <div className="divider"></div>
+          {/* ========================================
+              HISTORY
+          ======================================== */}
 
-          {/* HISTORY */}
+          <div className="toolbar-section">
 
-          <div className="tool-group">
-
-            <h3>HISTORY</h3>
+            <div className="section-title">
+              <span>History</span>
+            </div>
 
             <div className="history-buttons">
 
               <button
-                className="history-btn"
+                className="secondary-button"
                 onClick={undo}
-                disabled={
-                  historyIndex <= 0
-                }
+                disabled={historyIndex <= 0}
               >
                 <FaUndo />
                 Undo
               </button>
 
               <button
-                className="history-btn"
+                className="secondary-button"
                 onClick={redo}
                 disabled={
                   historyIndex >=
@@ -585,129 +859,92 @@ function App() {
 
           </div>
 
-          <div className="divider"></div>
-
-          {/* COLOR */}
-
-          <div className="tool-group">
-
-            <h3>
-              <FaPalette />
+          {/* ========================================
               COLOR
-            </h3>
+          ======================================== */}
+
+          <div className="toolbar-section">
+
+            <div className="section-title">
+              <FaPalette />
+              <span>Color</span>
+            </div>
 
             <div className="color-picker-wrapper">
 
               <input
                 type="color"
                 value={color}
-                onChange={(event) => {
-                  setColor(
-                    event.target.value
-                  );
-
-                  setTool("brush");
-                }}
+                onChange={(event) =>
+                  setColor(event.target.value)
+                }
+                className="color-picker"
               />
 
-              <span>
-                {color.toUpperCase()}
-              </span>
-
-            </div>
-
-            {/* CURRENT COLOR */}
-
-            <div className="color-preview">
-
               <div
-                className="preview-circle"
+                className="selected-color"
                 style={{
-                  backgroundColor:
-                    color,
+                  backgroundColor: color,
                 }}
-              ></div>
+              >
+                <span>{color.toUpperCase()}</span>
+              </div>
 
-              <span>
-                Current Color
-              </span>
-
-            </div>
-
-            {/* PRESET COLORS */}
-
-            <div className="preset-title">
-              Preset Colors
             </div>
 
             <div className="preset-colors">
 
-              {presetColors.map(
-                (presetColor) => (
-
-                  <button
-                    key={presetColor}
-                    className={`preset-color ${
-                      color ===
-                      presetColor
-                        ? "selected"
-                        : ""
-                    }`}
-                    style={{
-                      backgroundColor:
-                        presetColor,
-                    }}
-                    onClick={() => {
-                      setColor(
-                        presetColor
-                      );
-
-                      setTool("brush");
-                    }}
-                    aria-label={`Select color ${presetColor}`}
-                  />
-
-                )
-              )}
+              {presetColors.map((presetColor) => (
+                <button
+                  key={presetColor}
+                  className={`color-swatch ${
+                    color === presetColor
+                      ? "selected"
+                      : ""
+                  }`}
+                  style={{
+                    backgroundColor: presetColor,
+                  }}
+                  onClick={() =>
+                    setColor(presetColor)
+                  }
+                  title={presetColor}
+                />
+              ))}
 
             </div>
 
           </div>
 
-          <div className="divider"></div>
+          {/* ========================================
+              BRUSH SIZE
+          ======================================== */}
 
-          {/* BRUSH SIZE */}
+          <div className="toolbar-section">
 
-          <div className="tool-group">
-
-            <h3>BRUSH SIZE</h3>
+            <div className="section-title">
+              <span>Size</span>
+            </div>
 
             <div className="size-controls">
 
               <button
-                onClick={decreaseBrush}
-                disabled={
-                  brushSize <= 1
-                }
+                className="size-button"
+                onClick={decreaseBrushSize}
+                disabled={brushSize <= 1}
               >
                 <FaMinus />
               </button>
 
               <div className="size-value">
-
-                <strong>
-                  {brushSize}
-                </strong>
-
-                <span>px</span>
-
+                <span>{brushSize}</span>
+                <small>px</small>
               </div>
 
               <button
-                onClick={increaseBrush}
-                disabled={
-                  brushSize >= 50
-                }
+                className="size-button"
+                onClick={increaseBrushSize}
+                disabled={brushSize >= 50}
               >
                 <FaPlus />
               </button>
@@ -715,58 +952,63 @@ function App() {
             </div>
 
             <input
-              className="size-slider"
               type="range"
               min="1"
               max="50"
               value={brushSize}
               onChange={(event) =>
                 setBrushSize(
-                  Number(
-                    event.target.value
-                  )
+                  Number(event.target.value)
                 )
               }
+              className="size-slider"
             />
+
+          </div>
+
+          {/* ========================================
+              CLEAR
+          ======================================== */}
+
+          <div className="toolbar-section clear-section">
+
+            <button
+              className="clear-button"
+              onClick={clearCanvas}
+            >
+              <FaTrash />
+              Clear Canvas
+            </button>
 
           </div>
 
         </aside>
 
-        {/* ================= CANVAS ================= */}
+        {/* ==========================================
+            CANVAS AREA
+        ========================================== */}
 
         <section className="canvas-section">
 
           <div className="canvas-header">
 
             <div>
-
-              <h2>Your Canvas</h2>
+              <h2>Canvas</h2>
 
               <p>
-                Express your creativity freely
+                {getToolStatus()}
               </p>
-
             </div>
 
-            <div className="drawing-status">
-
-              <span className="status-dot"></span>
-
-              {tool === "brush" &&
-                "Brush ready"}
-
-              {tool === "eraser" &&
-                "Eraser ready"}
-
-              {tool === "fill" &&
-                "Fill ready"}
-
+            <div className="canvas-info">
+              {canvasRef.current
+                ? `${canvasRef.current.width} × ${canvasRef.current.height}`
+                : "Canvas"}
             </div>
 
           </div>
 
-          <div className="canvas-container">
+          <div className="canvas-wrapper">
 
             <canvas
               ref={canvasRef}
@@ -774,6 +1016,7 @@ function App() {
               onPointerMove={draw}
               onPointerUp={stopDrawing}
               onPointerLeave={stopDrawing}
+              className={`drawing-canvas tool-${tool}`}
             />
 
           </div>
@@ -782,19 +1025,14 @@ function App() {
 
       </main>
 
-      {/* ================= FOOTER ================= */}
+      {/* ============================================
+          FOOTER
+      ============================================ */}
 
-      <footer>
-
+      <footer className="footer">
         <p>
-          Built with <span>React</span> +{" "}
-          <span>Vite</span>
+          Drawly • Create something amazing ✨
         </p>
-
-        <p>
-          Draw • Create • Inspire
-        </p>
-
       </footer>
 
     </div>

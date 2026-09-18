@@ -1,15 +1,32 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  width: 100%;
+  min-height: 100%;
+}
+
 body {
+  width: 100%;
+  min-height: 100vh;
+
   font-family: "Inter", sans-serif;
-  background: #f5f7fb;
+
   color: #111827;
+
+  background: #f8fafc;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button,
@@ -17,747 +34,2036 @@ input {
   font-family: inherit;
 }
 
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+button {
+  border: none;
+  outline: none;
 }
 
-/* ================= HEADER ================= */
+button:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input {
+  outline: none;
+}
+
+
+/* =========================================================
+   ROOT VARIABLES
+========================================================= */
+
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #eef2ff;
+
+  --primary-soft: #f5f3ff;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
+
+  --white: #ffffff;
+
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-soft: #f9fafb;
+
+  --border: #e5e7eb;
+  --border-light: #f0f1f3;
+
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --danger-light: #fef2f2;
+
+  --shadow-small:
+    0 3px 10px rgba(15, 23, 42, 0.04);
+
+  --shadow-medium:
+    0 8px 25px rgba(15, 23, 42, 0.06);
+
+  --shadow-large:
+    0 15px 35px rgba(15, 23, 42, 0.08);
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #f8fafc;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 .header {
-  height: 82px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  width: 100%;
+  height: 74px;
+
+  flex-shrink: 0;
+
+  padding: 0 32px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 0 35px;
+  background: #ffffff;
+
+  border-bottom: 1px solid var(--border);
+
+  position: relative;
+  z-index: 10;
 }
 
-.logo-section {
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
   display: flex;
   align-items: center;
-  gap: 13px;
+
+  gap: 12px;
+
+  user-select: none;
 }
 
-.logo-icon {
-  width: 45px;
-  height: 45px;
+.logo {
+  width: 43px;
+  height: 43px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  color: #ffffff;
+
+  font-size: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1 0%,
+      #7c3aed 100%
+    );
 
   border-radius: 12px;
 
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #8b5cf6
-  );
-
-  color: white;
-  font-size: 19px;
-
   box-shadow:
-    0 8px 20px rgba(99, 102, 241, 0.25);
-}
-
-.logo-section h1 {
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.logo-section p {
-  margin-top: 2px;
-
-  font-size: 11px;
-  color: #9ca3af;
-  font-weight: 500;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.header-actions button {
-  border: none;
-  border-radius: 9px;
-
-  padding: 11px 17px;
-
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s ease;
-}
-
-.clear-btn {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.clear-btn:hover {
-  background: #e5e7eb;
-}
-
-.download-btn {
-  background: #111827;
-  color: white;
-}
-
-.download-btn:hover {
-  background: #374151;
-  transform: translateY(-1px);
-}
-
-/* ================= MAIN ================= */
-
-.drawing-area {
-  flex: 1;
-
-  display: flex;
-  gap: 24px;
-
-  padding: 25px 30px;
-}
-
-/* ================= TOOLBAR ================= */
-
-.toolbar {
-  width: 245px;
-  flex-shrink: 0;
-
-  background: #ffffff;
-
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-
-  padding: 22px;
-
-  box-shadow:
-    0 5px 25px rgba(17, 24, 39, 0.04);
-}
-
-.tool-group h3 {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-
-  margin-bottom: 13px;
-
-  font-size: 10px;
-  letter-spacing: 1px;
-
-  color: #9ca3af;
-  font-weight: 800;
-}
-
-/* ================= TOOLS ================= */
-
-.tool-btn {
-  width: 100%;
-
-  border: none;
-  background: transparent;
-
-  padding: 11px 13px;
-  margin-bottom: 6px;
-
-  border-radius: 9px;
-
-  display: flex;
-  align-items: center;
-  gap: 11px;
-
-  color: #6b7280;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.15s ease;
-}
-
-.tool-btn svg {
-  font-size: 14px;
-}
-
-.tool-btn:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-.tool-btn.active {
-  background: #eef2ff;
-  color: #6366f1;
-
-  box-shadow:
-    inset 3px 0 0 #6366f1;
-}
-
-.tool-btn:active {
-  transform: scale(0.98);
-}
-
-/* ================= DIVIDER ================= */
-
-.divider {
-  height: 1px;
-
-  background: #f0f1f3;
-
-  margin: 20px 0;
-}
-
-/* ================= HISTORY ================= */
-
-.history-buttons {
-  display: flex;
-  gap: 7px;
-}
-
-.history-btn {
-  flex: 1;
-
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-
-  padding: 9px 5px;
-
-  border-radius: 8px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  font-size: 11px;
-  font-weight: 600;
-
-  color: #4b5563;
-
-  cursor: pointer;
-
-  transition: 0.2s ease;
-}
-
-.history-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-
-  color: #6366f1;
-
-  border-color: #c7d2fe;
-}
-
-.history-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-/* ================= COLOR ================= */
-
-.color-picker-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.color-picker-wrapper input {
-  width: 43px;
-  height: 38px;
-
-  padding: 3px;
-
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  background: white;
-}
-
-.color-picker-wrapper span {
-  font-size: 12px;
-
-  color: #6b7280;
-
-  font-weight: 600;
-}
-
-/* ================= CURRENT COLOR ================= */
-
-.color-preview {
-  margin-top: 14px;
-
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.preview-circle {
-  width: 25px;
-  height: 25px;
-
-  border-radius: 50%;
-
-  border: 3px solid white;
-
-  box-shadow:
-    0 0 0 1px #e5e7eb,
-    0 3px 8px rgba(0, 0, 0, 0.1);
-}
-
-.color-preview span {
-  font-size: 11px;
-  color: #9ca3af;
-}
-
-/* ================= PRESET COLOR TITLE ================= */
-
-.preset-title {
-  margin-top: 17px;
-  margin-bottom: 10px;
-
-  font-size: 10px;
-
-  color: #9ca3af;
-
-  font-weight: 700;
-
-  letter-spacing: 0.4px;
-}
-
-/* ================= PRESET COLORS ================= */
-
-.preset-colors {
-  display: grid;
-
-  grid-template-columns:
-    repeat(6, 1fr);
-
-  gap: 8px;
-}
-
-.preset-color {
-  width: 27px;
-  height: 27px;
-
-  border: 2px solid #ffffff;
-
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 0 0 1px #e5e7eb;
+    0 7px 18px rgba(99, 102, 241, 0.25);
 
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-.preset-color:hover {
-  transform: scale(1.12);
+.logo:hover {
+  transform: translateY(-1px);
 
   box-shadow:
-    0 0 0 2px #c7d2fe,
-    0 4px 10px rgba(0, 0, 0, 0.12);
+    0 9px 22px rgba(99, 102, 241, 0.3);
 }
 
-.preset-color.selected {
-  box-shadow:
-    0 0 0 2px #6366f1,
-    0 0 0 4px #eef2ff;
+.brand h1 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 20px;
+
+  line-height: 1.1;
+
+  font-weight: 800;
+
+  letter-spacing: -0.6px;
 }
 
-.preset-color:active {
-  transform: scale(0.95);
+.brand p {
+  margin-top: 3px;
+
+  color: #6b7280;
+
+  font-size: 10px;
+
+  line-height: 1.2;
+
+  font-weight: 500;
+
+  letter-spacing: 0.1px;
 }
 
-/* ================= BRUSH SIZE ================= */
 
-.size-controls {
+/* =========================================================
+   HEADER ACTIONS
+========================================================= */
+
+.header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+
+  gap: 8px;
 }
 
-.size-controls button {
-  width: 30px;
-  height: 30px;
-
-  border: 1px solid #e5e7eb;
-
-  background: #ffffff;
-
-  border-radius: 7px;
+.icon-button {
+  width: 38px;
+  height: 38px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  cursor: pointer;
+  color: #4b5563;
 
+  background: #ffffff;
+
+  border: 1px solid var(--border);
+
+  border-radius: 9px;
+
+  font-size: 13px;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.icon-button:hover:not(:disabled) {
+  color: var(--primary);
+
+  background: var(--primary-light);
+
+  border-color: #c7d2fe;
+
+  transform: translateY(-1px);
+}
+
+.icon-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.icon-button:disabled {
+  color: #9ca3af;
+
+  background: #f9fafb;
+
+  opacity: 0.45;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+========================================================= */
+
+.download-button {
+  height: 38px;
+
+  padding: 0 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #4f46e5
+    );
+
+  border-radius: 9px;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 5px 13px rgba(79, 70, 229, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.download-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #4338ca
+    );
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 7px 17px rgba(79, 70, 229, 0.24);
+}
+
+.download-button:active {
+  transform: translateY(0);
+}
+
+.download-button svg {
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.main-container {
+  width: 100%;
+  max-width: 1500px;
+
+  margin: 0 auto;
+
+  padding: 20px 32px;
+
+  display: grid;
+
+  grid-template-columns:
+    245px
+    minmax(0, 1fr);
+
+  gap: 22px;
+
+  /*
+    Header = 74px
+    Footer = approximately 42px
+    Main available area is kept within viewport.
+  */
+  min-height: 0;
+
+  flex: 1;
+
+  align-items: stretch;
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.toolbar {
+  width: 100%;
+
+  height: 100%;
+
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+
+  border: 1px solid var(--border);
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 8px 25px rgba(15, 23, 42, 0.06);
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    #d1d5db
+    transparent;
+}
+
+.toolbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.toolbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toolbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+
+  border-radius: 10px;
+}
+
+.toolbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+
+/* =========================================================
+   TOOLBAR SECTION
+========================================================= */
+
+.toolbar-section {
+  width: 100%;
+
+  margin-bottom: 16px;
+
+  padding-bottom: 16px;
+
+  border-bottom:
+    1px solid var(--border-light);
+}
+
+.toolbar-section:last-child {
+  margin-bottom: 0;
+
+  padding-bottom: 0;
+
+  border-bottom: none;
+}
+
+
+/* =========================================================
+   SECTION TITLE
+========================================================= */
+
+.section-title {
+  width: 100%;
+
+  margin-bottom: 10px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #374151;
+
+  font-size: 10px;
+
+  line-height: 1.2;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.7px;
+}
+
+.section-title svg {
+  color: var(--primary);
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   TOOLS GRID
+========================================================= */
+
+.tool-grid {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 7px;
+}
+
+
+/* =========================================================
+   TOOL BUTTON
+========================================================= */
+
+.tool-button {
+  width: 100%;
+
+  min-height: 55px;
+
+  padding: 7px 4px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  color: #4b5563;
+
+  background: #f9fafb;
+
+  border: 1px solid #edf0f3;
+
+  border-radius: 9px;
+
+  font-size: 9px;
+
+  line-height: 1.2;
+
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tool-button svg {
   color: #6b7280;
 
-  transition: 0.2s;
+  font-size: 15px;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.size-controls button:hover:not(:disabled) {
-  background: #f3f4f6;
-  color: #111827;
+.tool-button:hover {
+  color: var(--primary-dark);
+
+  background: #f5f6ff;
+
+  border-color: #d8dcff;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 3px 8px rgba(99, 102, 241, 0.07);
 }
 
-.size-controls button:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+.tool-button:hover svg {
+  color: var(--primary);
+
+  transform: scale(1.05);
 }
+
+.tool-button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   ACTIVE TOOL
+========================================================= */
+
+.tool-button.active {
+  color: var(--primary-dark);
+
+  background:
+    linear-gradient(
+      135deg,
+      #eef2ff,
+      #f5f3ff
+    );
+
+  border-color: #c7d2fe;
+
+  box-shadow:
+    0 4px 10px rgba(99, 102, 241, 0.1);
+}
+
+.tool-button.active svg {
+  color: var(--primary);
+
+  transform: scale(1.05);
+}
+
+
+/* =========================================================
+   HISTORY BUTTONS
+========================================================= */
+
+.history-buttons {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 7px;
+}
+
+.secondary-button {
+  width: 100%;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  color: #4b5563;
+
+  background: #f9fafb;
+
+  border: 1px solid var(--border);
+
+  border-radius: 8px;
+
+  font-size: 9px;
+
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.secondary-button svg {
+  font-size: 10px;
+}
+
+.secondary-button:hover:not(:disabled) {
+  color: var(--primary-dark);
+
+  background: var(--primary-light);
+
+  border-color: #c7d2fe;
+}
+
+.secondary-button:disabled {
+  color: #9ca3af;
+
+  opacity: 0.45;
+}
+
+
+/* =========================================================
+   COLOR PICKER
+========================================================= */
+
+.color-picker-wrapper {
+  width: 100%;
+
+  margin-bottom: 10px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+.color-picker {
+  width: 38px;
+  height: 38px;
+
+  padding: 2px;
+
+  flex-shrink: 0;
+
+  background: #ffffff;
+
+  border: 1px solid var(--border);
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.color-picker:hover {
+  border-color: #c7d2fe;
+
+  box-shadow:
+    0 3px 8px rgba(99, 102, 241, 0.08);
+}
+
+
+/* =========================================================
+   SELECTED COLOR
+========================================================= */
+
+.selected-color {
+  flex: 1;
+
+  min-width: 0;
+
+  height: 38px;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+
+  border-radius: 9px;
+}
+
+.selected-color::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background-image:
+    linear-gradient(
+      45deg,
+      #d1d5db 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      -45deg,
+      #d1d5db 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 75%,
+      #d1d5db 75%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 75%,
+      #d1d5db 75%
+    );
+
+  background-size:
+    10px 10px;
+
+  background-position:
+    0 0,
+    0 5px,
+    5px -5px,
+    -5px 0;
+
+  opacity: 0.25;
+}
+
+.selected-color span {
+  position: relative;
+
+  z-index: 1;
+
+  max-width: 90%;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+
+  padding: 4px 7px;
+
+  color: #374151;
+
+  background:
+    rgba(255, 255, 255, 0.9);
+
+  border-radius: 5px;
+
+  font-size: 8px;
+
+  line-height: 1;
+
+  font-weight: 700;
+
+  letter-spacing: 0.2px;
+}
+
+
+/* =========================================================
+   PRESET COLORS
+========================================================= */
+
+.preset-colors {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(6, minmax(0, 1fr));
+
+  gap: 7px;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+
+  justify-self: center;
+
+  border: 2px solid #ffffff;
+
+  outline: 1px solid #e5e7eb;
+
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    outline-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.14);
+
+  box-shadow:
+    0 3px 7px rgba(15, 23, 42, 0.12);
+}
+
+.color-swatch.selected {
+  outline:
+    2px solid var(--primary);
+
+  outline-offset: 2px;
+
+  box-shadow:
+    0 2px 7px rgba(99, 102, 241, 0.15);
+}
+
+
+/* =========================================================
+   BRUSH SIZE
+========================================================= */
+
+.size-controls {
+  width: 100%;
+
+  margin-bottom: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.size-button {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #4b5563;
+
+  background: #f9fafb;
+
+  border: 1px solid var(--border);
+
+  border-radius: 7px;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.size-button:hover:not(:disabled) {
+  color: var(--primary);
+
+  background: var(--primary-light);
+
+  border-color: #c7d2fe;
+
+  transform: translateY(-1px);
+}
+
+.size-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.size-button:disabled {
+  opacity: 0.4;
+}
+
+.size-button svg {
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   SIZE VALUE
+========================================================= */
 
 .size-value {
   display: flex;
   align-items: baseline;
-  gap: 3px;
-}
 
-.size-value strong {
-  font-size: 20px;
-  color: #111827;
+  gap: 2px;
 }
 
 .size-value span {
-  font-size: 10px;
-  color: #9ca3af;
+  color: #111827;
+
+  font-size: 17px;
+
+  line-height: 1;
+
+  font-weight: 700;
 }
+
+.size-value small {
+  color: #6b7280;
+
+  font-size: 8px;
+
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   SIZE SLIDER
+========================================================= */
 
 .size-slider {
   width: 100%;
+  height: 4px;
 
-  margin-top: 15px;
+  appearance: none;
+  -webkit-appearance: none;
 
-  accent-color: #6366f1;
+  background:
+    linear-gradient(
+      to right,
+      #6366f1,
+      #6366f1
+    )
+    no-repeat;
+
+  background-size:
+    100% 100%;
+
+  border-radius: 10px;
 
   cursor: pointer;
 }
 
-/* ================= CANVAS SECTION ================= */
+.size-slider::-webkit-slider-runnable-track {
+  height: 4px;
 
-.canvas-section {
-  flex: 1;
-  min-width: 0;
+  background: #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.size-slider::-webkit-slider-thumb {
+  width: 15px;
+  height: 15px;
+
+  margin-top: -5.5px;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  background: var(--primary);
+
+  border: 3px solid #ffffff;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 1px 6px rgba(15, 23, 42, 0.2);
+
+  cursor: pointer;
+}
+
+.size-slider::-moz-range-track {
+  height: 4px;
+
+  background: #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.size-slider::-moz-range-progress {
+  height: 4px;
+
+  background: var(--primary);
+
+  border-radius: 10px;
+}
+
+.size-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+
+  background: var(--primary);
+
+  border: 3px solid #ffffff;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 1px 6px rgba(15, 23, 42, 0.2);
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   CLEAR SECTION
+========================================================= */
+
+.clear-section {
+  margin-top: auto;
+}
+
+
+/* =========================================================
+   CLEAR BUTTON
+========================================================= */
+
+.clear-button {
+  width: 100%;
+  height: 36px;
 
   display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  color: #dc2626;
+
+  background: #fef2f2;
+
+  border: 1px solid #fecaca;
+
+  border-radius: 8px;
+
+  font-size: 9px;
+
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.clear-button svg {
+  font-size: 10px;
+}
+
+.clear-button:hover {
+  color: #ffffff;
+
+  background: #ef4444;
+
+  border-color: #ef4444;
+
+  transform: translateY(-1px);
+}
+
+.clear-button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   CANVAS SECTION
+========================================================= */
+
+.canvas-section {
+  width: 100%;
+  min-width: 0;
+
+  /*
+    This is the main height fix.
+
+    The section stretches with the main container,
+    so it stays balanced with the sidebar.
+  */
+
+  height: 100%;
+
+  min-height: 0;
+
+  display: flex;
+
   flex-direction: column;
 }
 
+
+/* =========================================================
+   CANVAS HEADER
+========================================================= */
+
 .canvas-header {
+  width: 100%;
+
+  min-height: 42px;
+
+  margin-bottom: 8px;
+
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  margin-bottom: 13px;
 }
 
 .canvas-header h2 {
-  font-size: 17px;
+  margin: 0;
 
-  font-weight: 750;
+  color: #111827;
 
-  letter-spacing: -0.3px;
+  font-size: 15px;
+
+  line-height: 1.2;
+
+  font-weight: 700;
+
+  letter-spacing: -0.2px;
 }
 
 .canvas-header p {
   margin-top: 3px;
 
-  font-size: 11px;
+  color: #6b7280;
 
-  color: #9ca3af;
+  font-size: 9px;
+
+  line-height: 1.2;
+
+  font-weight: 500;
 }
 
-/* ================= STATUS ================= */
 
-.drawing-status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
+/* =========================================================
+   CANVAS INFORMATION
+========================================================= */
 
-  padding: 8px 12px;
+.canvas-info {
+  padding: 5px 8px;
+
+  color: #6b7280;
 
   background: #ffffff;
 
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 
-  border-radius: 20px;
+  border-radius: 6px;
 
-  font-size: 11px;
+  font-size: 8px;
+
+  line-height: 1;
 
   font-weight: 600;
 
-  color: #6b7280;
+  white-space: nowrap;
 }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
 
-  border-radius: 50%;
+/* =========================================================
+   CANVAS WRAPPER
+========================================================= */
 
-  background: #22c55e;
+.canvas-wrapper {
+  width: 100%;
+
+  /*
+    Important:
+    flex: 1 makes the canvas consume only
+    the remaining height after the Canvas header.
+
+    This prevents the canvas from becoming
+    unnecessarily taller than the toolbar.
+  */
+
+  flex: 1 1 auto;
+
+  min-height: 0;
+
+  padding: 8px;
+
+  background: #ffffff;
+
+  border: 1px solid var(--border);
+
+  border-radius: 14px;
 
   box-shadow:
-    0 0 0 3px #dcfce7;
-}
-
-/* ================= CANVAS ================= */
-
-.canvas-container {
-  flex: 1;
-
-  min-height: 500px;
-
-  background: white;
-
-  border: 1px solid #e5e7eb;
-
-  border-radius: 16px;
-
-  padding: 10px;
-
-  box-shadow:
-    0 10px 35px rgba(17, 24, 39, 0.06);
+    0 8px 25px rgba(15, 23, 42, 0.06);
 
   overflow: hidden;
 }
 
-canvas {
+
+/* =========================================================
+   DRAWING CANVAS
+========================================================= */
+
+.drawing-canvas {
+  display: block;
+
   width: 100%;
   height: 100%;
 
-  display: block;
-
   background: #ffffff;
 
-  border-radius: 10px;
-
-  cursor: crosshair;
+  border-radius: 9px;
 
   touch-action: none;
+
+  cursor: crosshair;
+
+  user-select: none;
+
+  -webkit-user-select: none;
 }
 
-/* ================= FILL TOOL CURSOR ================= */
 
-canvas:active {
+/* =========================================================
+   CANVAS TOOL CURSORS
+========================================================= */
+
+.drawing-canvas.tool-pencil {
   cursor: crosshair;
 }
 
-/* ================= FOOTER ================= */
+.drawing-canvas.tool-brush {
+  cursor: crosshair;
+}
 
-footer {
-  height: 45px;
+.drawing-canvas.tool-eraser {
+  cursor: crosshair;
+}
+
+.drawing-canvas.tool-fill {
+  cursor: cell;
+}
+
+.drawing-canvas.tool-line {
+  cursor: crosshair;
+}
+
+.drawing-canvas.tool-rectangle {
+  cursor: crosshair;
+}
+
+.drawing-canvas.tool-circle {
+  cursor: crosshair;
+}
+
+.drawing-canvas.tool-arrow {
+  cursor: crosshair;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+  width: 100%;
+
+  min-height: 42px;
+
+  flex-shrink: 0;
+
+  padding: 10px 20px;
 
   display: flex;
   align-items: center;
-  justify-content: space-between;
-
-  padding: 0 35px;
+  justify-content: center;
 
   color: #9ca3af;
 
-  font-size: 10px;
+  background: #ffffff;
+
+  border-top: 1px solid var(--border);
+
+  font-size: 8px;
+
+  font-weight: 500;
 }
 
-footer span {
-  color: #6366f1;
-
-  font-weight: 700;
+.footer p {
+  margin: 0;
 }
 
-/* ================= BUTTON EFFECTS ================= */
 
-.header-actions button:active,
-.history-btn:active,
-.size-controls button:active {
-  transform: scale(0.97);
-}
+/* =========================================================
+   LARGE DESKTOP
+========================================================= */
 
-/* ================= RESPONSIVE ================= */
+@media (min-width: 1400px) {
+  .header {
+    padding-left: 38px;
+    padding-right: 38px;
+  }
 
-@media (max-width: 1000px) {
-  .drawing-area {
-    gap: 18px;
-    padding: 20px;
+  .main-container {
+    padding-left: 38px;
+    padding-right: 38px;
+
+    grid-template-columns:
+      255px
+      minmax(0, 1fr);
+
+    gap: 24px;
   }
 
   .toolbar {
-    width: 220px;
+    padding: 17px;
   }
 
+  .tool-button {
+    min-height: 57px;
+  }
+}
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media (max-width: 1200px) {
   .header {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+
+  .main-container {
+    padding-left: 26px;
+    padding-right: 26px;
+
+    grid-template-columns:
+      235px
+      minmax(0, 1fr);
+
+    gap: 18px;
+  }
+
+  .toolbar {
+    padding: 15px;
+  }
+
+  .tool-button {
+    min-height: 53px;
+  }
+
+  .color-swatch {
+    width: 23px;
+    height: 23px;
+  }
+}
+
+
+/* =========================================================
+   1000px
+========================================================= */
+
+@media (max-width: 1000px) {
+  .header {
+    height: 70px;
+
     padding: 0 20px;
   }
 
-  footer {
-    padding: 0 20px;
+  .main-container {
+    padding: 18px 20px;
+
+    grid-template-columns:
+      220px
+      minmax(0, 1fr);
+
+    gap: 17px;
+  }
+
+  .toolbar {
+    padding: 14px;
+  }
+
+  .toolbar-section {
+    margin-bottom: 14px;
+
+    padding-bottom: 14px;
+  }
+
+  .tool-grid {
+    gap: 6px;
+  }
+
+  .tool-button {
+    min-height: 51px;
+
+    font-size: 8px;
+  }
+
+  .tool-button svg {
+    font-size: 14px;
+  }
+
+  .preset-colors {
+    gap: 6px;
+  }
+
+  .color-swatch {
+    width: 21px;
+    height: 21px;
+  }
+
+  .canvas-header h2 {
+    font-size: 14px;
+  }
+}
+
+
+/* =========================================================
+   TABLET / 850px
+========================================================= */
+
+@media (max-width: 850px) {
+  .header {
+    height: 68px;
+
+    padding: 0 18px;
+  }
+
+  .main-container {
+    display: flex;
+    flex-direction: column;
+
+    padding: 16px 18px;
+
+    gap: 15px;
+  }
+
+  /*
+    On smaller screens the toolbar moves below
+    the canvas, so canvas receives a controlled height.
+  */
+
+  .canvas-section {
+    order: 1;
+
+    width: 100%;
+
+    height: 520px;
+
+    min-height: 0;
+  }
+
+  .toolbar {
+    order: 2;
+
+    width: 100%;
+
+    height: auto;
+
+    overflow: visible;
+  }
+
+  .tool-grid {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+
+    gap: 8px;
+  }
+
+  .tool-button {
+    min-height: 58px;
+  }
+
+  .toolbar-section {
+    margin-bottom: 17px;
+
+    padding-bottom: 17px;
+  }
+
+  .history-buttons {
+    max-width: 300px;
+  }
+
+  .color-picker-wrapper {
+    max-width: 350px;
+  }
+
+  .preset-colors {
+    max-width: 350px;
+
+    grid-template-columns:
+      repeat(12, 1fr);
+  }
+
+  .size-controls {
+    max-width: 350px;
+  }
+
+  .size-slider {
+    max-width: 350px;
+  }
+
+  .clear-section {
+    margin-top: 0;
+  }
+
+  .clear-button {
+    max-width: 350px;
+  }
+}
+
+
+/* =========================================================
+   TABLET 700px
+========================================================= */
+
+@media (max-width: 700px) {
+  .header {
+    padding: 0 15px;
+  }
+
+  .main-container {
+    padding: 14px 15px;
+  }
+
+  .canvas-section {
+    height: 470px;
+  }
+
+  .canvas-wrapper {
+    padding: 7px;
+
+    border-radius: 12px;
+  }
+
+  .drawing-canvas {
+    border-radius: 8px;
+  }
+
+  .tool-grid {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+
+    gap: 7px;
+  }
+
+  .tool-button {
+    min-height: 55px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE 600px
+========================================================= */
+
+@media (max-width: 600px) {
+  .header {
+    height: auto;
+
+    min-height: 65px;
+
+    padding: 10px 13px;
+  }
+
+  .brand {
+    gap: 9px;
+  }
+
+  .logo {
+    width: 38px;
+    height: 38px;
+
+    font-size: 15px;
+
+    border-radius: 10px;
+  }
+
+  .brand h1 {
+    font-size: 17px;
+  }
+
+  .brand p {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 5px;
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+
+    border-radius: 8px;
+  }
+
+  .download-button {
+    height: 34px;
+
+    padding: 0 10px;
+
+    border-radius: 8px;
+
+    font-size: 9px;
+  }
+
+  .download-button svg {
+    font-size: 10px;
+  }
+
+  .main-container {
+    padding: 12px;
+
+    gap: 12px;
+  }
+
+  .canvas-section {
+    height: 430px;
+  }
+
+  .canvas-header {
+    min-height: 39px;
+
+    margin-bottom: 7px;
+  }
+
+  .canvas-header h2 {
+    font-size: 13px;
+  }
+
+  .canvas-header p {
+    font-size: 8px;
+  }
+
+  .canvas-info {
+    display: none;
+  }
+
+  .canvas-wrapper {
+    padding: 6px;
+
+    border-radius: 11px;
+  }
+
+  .drawing-canvas {
+    border-radius: 7px;
+  }
+
+  .toolbar {
+    padding: 13px;
+
+    border-radius: 12px;
+  }
+
+  .tool-grid {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+
+    gap: 6px;
+  }
+
+  .tool-button {
+    min-height: 54px;
+
+    gap: 4px;
+
+    border-radius: 8px;
+
+    font-size: 7.5px;
+  }
+
+  .tool-button svg {
+    font-size: 13px;
+  }
+
+  .toolbar-section {
+    margin-bottom: 14px;
+
+    padding-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 9px;
+
+    margin-bottom: 8px;
+  }
+
+  .history-buttons {
+    gap: 6px;
+  }
+
+  .secondary-button {
+    height: 32px;
+
+    font-size: 8px;
+  }
+
+  .color-picker {
+    width: 35px;
+    height: 35px;
+  }
+
+  .selected-color {
+    height: 35px;
+  }
+
+  .preset-colors {
+    gap: 7px;
+
+    grid-template-columns:
+      repeat(6, 1fr);
+  }
+
+  .color-swatch {
+    width: 22px;
+    height: 22px;
+  }
+
+  .size-button {
+    width: 29px;
+    height: 29px;
+  }
+
+  .size-value span {
+    font-size: 16px;
+  }
+
+  .clear-button {
+    height: 34px;
+  }
+
+  .footer {
+    min-height: 38px;
+
+    padding: 9px 15px;
+
+    font-size: 7px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE 500px
+========================================================= */
+
+@media (max-width: 500px) {
+  .canvas-section {
+    height: 390px;
+  }
+
+  .tool-grid {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+  }
+
+  .tool-button {
+    min-height: 52px;
   }
 
   .preset-colors {
     grid-template-columns:
       repeat(6, 1fr);
   }
-}
 
-@media (max-width: 850px) {
-  .drawing-area {
-    flex-direction: column;
-  }
-
-  .toolbar {
-    width: 100%;
-  }
-
-  .tool-group {
-    max-width: 500px;
-  }
-
-  .canvas-container {
-    min-height: 450px;
-  }
-
-  .preset-colors {
-    grid-template-columns:
-      repeat(12, 27px);
+  .color-swatch {
+    width: 21px;
+    height: 21px;
   }
 }
 
-@media (max-width: 600px) {
+
+/* =========================================================
+   SMALL MOBILE 450px
+========================================================= */
+
+@media (max-width: 450px) {
   .header {
-    height: 70px;
-    padding: 0 15px;
+    padding: 9px 11px;
   }
 
-  .logo-icon {
-    width: 40px;
-    height: 40px;
+  .brand {
+    gap: 7px;
   }
 
-  .logo-section h1 {
-    font-size: 18px;
-  }
+  .logo {
+    width: 35px;
+    height: 35px;
 
-  .logo-section p {
-    display: none;
-  }
-
-  .header-actions {
-    gap: 6px;
-  }
-
-  .header-actions button {
-    width: 40px;
-    height: 40px;
-
-    padding: 0;
-
-    justify-content: center;
-  }
-
-  .header-actions button span {
-    display: none;
-  }
-
-  .header-actions svg {
     font-size: 14px;
   }
 
-  .drawing-area {
-    padding: 15px;
-    gap: 15px;
-  }
-
-  .toolbar {
-    padding: 18px;
-    border-radius: 13px;
-  }
-
-  .preset-colors {
-    grid-template-columns:
-      repeat(6, 27px);
-
-    gap: 9px;
-  }
-
-  .canvas-header {
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .canvas-header h2 {
+  .brand h1 {
     font-size: 15px;
   }
 
-  .drawing-status {
-    font-size: 9px;
-    padding: 7px 9px;
+  .header-actions {
+    gap: 4px;
   }
 
-  .canvas-container {
-    min-height: 400px;
-
-    padding: 7px;
-
-    border-radius: 13px;
+  .icon-button {
+    width: 32px;
+    height: 32px;
   }
 
-  footer {
-    height: 40px;
+  .download-button {
+    width: 34px;
 
-    padding: 0 15px;
+    padding: 0;
 
-    font-size: 9px;
+    font-size: 0;
   }
-}
 
-@media (max-width: 400px) {
-  .drawing-status {
-    display: none;
+  .download-button svg {
+    font-size: 12px;
+  }
+
+  .main-container {
+    padding: 10px;
+  }
+
+  .canvas-section {
+    height: 360px;
+  }
+
+  .canvas-header {
+    min-height: 36px;
+  }
+
+  .canvas-header h2 {
+    font-size: 12px;
+  }
+
+  .canvas-header p {
+    font-size: 7px;
+  }
+
+  .toolbar {
+    padding: 11px;
+  }
+
+  .tool-grid {
+    gap: 5px;
+  }
+
+  .tool-button {
+    min-height: 50px;
+
+    font-size: 7px;
+  }
+
+  .tool-button svg {
+    font-size: 12px;
   }
 
   .history-buttons {
     gap: 5px;
   }
 
-  .history-btn {
-    font-size: 10px;
+  .secondary-button {
+    height: 31px;
+  }
+
+  .color-picker-wrapper {
+    gap: 6px;
+  }
+
+  .color-picker {
+    width: 34px;
+    height: 34px;
+  }
+
+  .selected-color {
+    height: 34px;
+  }
+
+  .selected-color span {
+    font-size: 7px;
+  }
+
+  .preset-colors {
+    gap: 6px;
+  }
+
+  .color-swatch {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE 400px
+========================================================= */
+
+@media (max-width: 400px) {
+  .header {
+    min-height: 62px;
+
+    padding: 8px 10px;
+  }
+
+  .logo {
+    width: 33px;
+    height: 33px;
+  }
+
+  .brand h1 {
+    font-size: 14px;
+  }
+
+  .header-actions {
+    gap: 3px;
+  }
+
+  .icon-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .download-button {
+    width: 32px;
+    height: 30px;
+  }
+
+  .main-container {
+    padding: 8px;
+
+    gap: 9px;
+  }
+
+  .canvas-section {
+    height: 330px;
+  }
+
+  .canvas-wrapper {
+    padding: 5px;
+
+    border-radius: 10px;
+  }
+
+  .drawing-canvas {
+    border-radius: 6px;
+  }
+
+  .toolbar {
+    padding: 10px;
+
+    border-radius: 10px;
+  }
+
+  /*
+    On very narrow screens, two columns
+    make each tool large enough to use.
+  */
+
+  .tool-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 6px;
+  }
+
+  .tool-button {
+    min-height: 54px;
+
+    font-size: 8px;
+  }
+
+  .tool-button svg {
+    font-size: 13px;
   }
 
   .preset-colors {
     grid-template-columns:
-      repeat(6, 25px);
-
-    gap: 8px;
+      repeat(6, 1fr);
   }
 
-  .preset-color {
-    width: 25px;
-    height: 25px;
+  .color-swatch {
+    width: 21px;
+    height: 21px;
   }
 
-  .canvas-container {
-    min-height: 350px;
+  .footer {
+    min-height: 35px;
+
+    padding: 8px 10px;
+  }
+}
+
+
+/* =========================================================
+   TOUCH DEVICES
+========================================================= */
+
+@media (hover: none) {
+  .tool-button:hover {
+    transform: none;
+
+    box-shadow: none;
+  }
+
+  .tool-button:hover svg {
+    transform: none;
+  }
+
+  .download-button:hover {
+    transform: none;
+  }
+
+  .icon-button:hover {
+    transform: none;
+  }
+
+  .size-button:hover {
+    transform: none;
+  }
+
+  .clear-button:hover {
+    transform: none;
+  }
+
+  .color-swatch:hover {
+    transform: none;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    transition-duration: 0.01ms !important;
+
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
   }
 }
