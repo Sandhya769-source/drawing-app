@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   FaBrush,
   FaEraser,
+  FaFillDrip,
   FaUndo,
   FaRedo,
   FaTrash,
@@ -9,8 +10,6 @@ import {
   FaPalette,
   FaPlus,
   FaMinus,
-  FaSquare,
-  FaCircle,
 } from "react-icons/fa";
 import "./App.css";
 
@@ -25,16 +24,18 @@ function App() {
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
-  const isDrawing = useRef(false);
+  const historyRef = useRef([]);
+  const historyIndexRef = useRef(-1);
 
-  // Shape drawing
-  const startPoint = useRef(null);
-  const canvasSnapshot = useRef(null);
+  const isDrawing = useRef(false);
 
   /* ================= INITIAL CANVAS ================= */
 
   useEffect(() => {
     const canvas = canvasRef.current;
+
+    if (!canvas) return;
+
     const context = canvas.getContext("2d");
 
     canvas.width = canvas.offsetWidth;
@@ -51,6 +52,9 @@ function App() {
 
     const initialState = canvas.toDataURL();
 
+    historyRef.current = [initialState];
+    historyIndexRef.current = 0;
+
     setHistory([initialState]);
     setHistoryIndex(0);
   }, []);
@@ -64,36 +68,27 @@ function App() {
 
     const newState = canvas.toDataURL();
 
-    setHistory((previousHistory) => {
-      const currentIndex = historyIndex;
+    const currentHistory = historyRef.current;
+    const currentIndex = historyIndexRef.current;
 
-      const trimmedHistory =
-        previousHistory.slice(
-          0,
-          currentIndex + 1
-        );
+    // Remove redo states
+    let updatedHistory = [
+      ...currentHistory.slice(0, currentIndex + 1),
+      newState,
+    ];
 
-      let updatedHistory = [
-        ...trimmedHistory,
-        newState,
-      ];
+    // Maximum 30 states
+    if (updatedHistory.length > 30) {
+      updatedHistory = updatedHistory.slice(-30);
+    }
 
-      if (updatedHistory.length > 30) {
-        updatedHistory =
-          updatedHistory.slice(
-            updatedHistory.length - 30
-          );
-      }
+    const newIndex = updatedHistory.length - 1;
 
-      return updatedHistory;
-    });
+    historyRef.current = updatedHistory;
+    historyIndexRef.current = newIndex;
 
-    setHistoryIndex((previousIndex) => {
-      return Math.min(
-        previousIndex + 1,
-        29
-      );
-    });
+    setHistory(updatedHistory);
+    setHistoryIndex(newIndex);
   };
 
   /* ================= RESTORE STATE ================= */
@@ -130,36 +125,38 @@ function App() {
   /* ================= UNDO ================= */
 
   const undo = () => {
-    if (historyIndex <= 0) return;
+    const currentIndex = historyIndexRef.current;
 
-    const newIndex =
-      historyIndex - 1;
+    if (currentIndex <= 0) return;
+
+    const newIndex = currentIndex - 1;
+
+    historyIndexRef.current = newIndex;
 
     setHistoryIndex(newIndex);
 
-    restoreState(
-      history[newIndex]
-    );
+    restoreState(historyRef.current[newIndex]);
   };
 
   /* ================= REDO ================= */
 
   const redo = () => {
+    const currentIndex = historyIndexRef.current;
+
     if (
-      historyIndex >=
-      history.length - 1
+      currentIndex >=
+      historyRef.current.length - 1
     ) {
       return;
     }
 
-    const newIndex =
-      historyIndex + 1;
+    const newIndex = currentIndex + 1;
+
+    historyIndexRef.current = newIndex;
 
     setHistoryIndex(newIndex);
 
-    restoreState(
-      history[newIndex]
-    );
+    restoreState(historyRef.current[newIndex]);
   };
 
   /* ================= CANVAS POSITION ================= */
@@ -167,8 +164,7 @@ function App() {
   const getPosition = (event) => {
     const canvas = canvasRef.current;
 
-    const rect =
-      canvas.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
 
     return {
       x: event.clientX - rect.left,
@@ -176,119 +172,33 @@ function App() {
     };
   };
 
-  /* ================= DRAW SHAPE ================= */
-
-  const drawShape = (
-    context,
-    start,
-    end
-  ) => {
-    const width =
-      end.x - start.x;
-
-    const height =
-      end.y - start.y;
-
-    context.strokeStyle = color;
-    context.lineWidth = brushSize;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-
-    context.beginPath();
-
-    /* ================= LINE ================= */
-
-    if (tool === "line") {
-      context.moveTo(
-        start.x,
-        start.y
-      );
-
-      context.lineTo(
-        end.x,
-        end.y
-      );
-
-      context.stroke();
-    }
-
-    /* ================= RECTANGLE ================= */
-
-    if (tool === "rectangle") {
-      context.rect(
-        start.x,
-        start.y,
-        width,
-        height
-      );
-
-      context.stroke();
-    }
-
-    /* ================= CIRCLE ================= */
-
-    if (tool === "circle") {
-      const radius =
-        Math.sqrt(
-          width * width +
-          height * height
-        );
-
-      context.arc(
-        start.x,
-        start.y,
-        radius,
-        0,
-        Math.PI * 2
-      );
-
-      context.stroke();
-    }
-
-    context.closePath();
-  };
-
   /* ================= START DRAWING ================= */
 
   const startDrawing = (event) => {
     const canvas = canvasRef.current;
-    const context =
-      canvas.getContext("2d");
 
-    const position =
-      getPosition(event);
+    if (!canvas) return;
 
-    isDrawing.current = true;
+    // Fill tool works with a single click
+    if (tool === "fill") {
+      const { x, y } = getPosition(event);
 
-    startPoint.current = position;
-
-    /*
-      Save the current canvas before
-      drawing a shape.
-    */
-
-    if (
-      tool === "line" ||
-      tool === "rectangle" ||
-      tool === "circle"
-    ) {
-      canvasSnapshot.current =
-        context.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
+      floodFill(
+        Math.floor(x),
+        Math.floor(y)
+      );
 
       return;
     }
 
-    context.beginPath();
+    const context = canvas.getContext("2d");
 
-    context.moveTo(
-      position.x,
-      position.y
-    );
+    const { x, y } = getPosition(event);
+
+    isDrawing.current = true;
+
+    context.beginPath();
+    context.moveTo(x, y);
   };
 
   /* ================= DRAW ================= */
@@ -297,62 +207,22 @@ function App() {
     if (!isDrawing.current) return;
 
     const canvas = canvasRef.current;
-    const context =
-      canvas.getContext("2d");
+    const context = canvas.getContext("2d");
 
-    const position =
-      getPosition(event);
-
-    /* ================= SHAPES ================= */
-
-    if (
-      tool === "line" ||
-      tool === "rectangle" ||
-      tool === "circle"
-    ) {
-      /*
-        Restore original canvas
-        before drawing the preview.
-      */
-
-      if (canvasSnapshot.current) {
-        context.putImageData(
-          canvasSnapshot.current,
-          0,
-          0
-        );
-      }
-
-      drawShape(
-        context,
-        startPoint.current,
-        position
-      );
-
-      return;
-    }
-
-    /* ================= BRUSH / ERASER ================= */
+    const { x, y } = getPosition(event);
 
     context.lineWidth = brushSize;
 
     context.lineCap = "round";
-
     context.lineJoin = "round";
 
     if (tool === "eraser") {
-      context.strokeStyle =
-        "#ffffff";
+      context.strokeStyle = "#ffffff";
     } else {
-      context.strokeStyle =
-        color;
+      context.strokeStyle = color;
     }
 
-    context.lineTo(
-      position.x,
-      position.y
-    );
-
+    context.lineTo(x, y);
     context.stroke();
   };
 
@@ -363,11 +233,144 @@ function App() {
 
     isDrawing.current = false;
 
-    canvasSnapshot.current = null;
+    saveState();
+  };
 
-    startPoint.current = null;
+  /* ================= FLOOD FILL ================= */
+
+  const floodFill = (startX, startY) => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+
+    const imageData = context.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    const pixels = imageData.data;
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Make sure the click is inside the canvas
+    if (
+      startX < 0 ||
+      startX >= width ||
+      startY < 0 ||
+      startY >= height
+    ) {
+      return;
+    }
+
+    const startIndex =
+      (startY * width + startX) * 4;
+
+    const targetColor = {
+      r: pixels[startIndex],
+      g: pixels[startIndex + 1],
+      b: pixels[startIndex + 2],
+      a: pixels[startIndex + 3],
+    };
+
+    // Convert selected hex color to RGB
+    const fillColor = hexToRgb(color);
+
+    if (!fillColor) return;
+
+    // Don't fill if selected color is already the same
+    if (
+      targetColor.r === fillColor.r &&
+      targetColor.g === fillColor.g &&
+      targetColor.b === fillColor.b &&
+      targetColor.a === 255
+    ) {
+      return;
+    }
+
+    const matchesTargetColor = (index) => {
+      return (
+        pixels[index] === targetColor.r &&
+        pixels[index + 1] === targetColor.g &&
+        pixels[index + 2] === targetColor.b &&
+        pixels[index + 3] === targetColor.a
+      );
+    };
+
+    const setPixelColor = (index) => {
+      pixels[index] = fillColor.r;
+      pixels[index + 1] = fillColor.g;
+      pixels[index + 2] = fillColor.b;
+      pixels[index + 3] = 255;
+    };
+
+    const stack = [
+      [startX, startY],
+    ];
+
+    while (stack.length > 0) {
+      const [x, y] = stack.pop();
+
+      if (
+        x < 0 ||
+        x >= width ||
+        y < 0 ||
+        y >= height
+      ) {
+        continue;
+      }
+
+      const index =
+        (y * width + x) * 4;
+
+      if (!matchesTargetColor(index)) {
+        continue;
+      }
+
+      setPixelColor(index);
+
+      stack.push([x + 1, y]);
+      stack.push([x - 1, y]);
+      stack.push([x, y + 1]);
+      stack.push([x, y - 1]);
+    }
+
+    context.putImageData(
+      imageData,
+      0,
+      0
+    );
 
     saveState();
+  };
+
+  /* ================= HEX TO RGB ================= */
+
+  const hexToRgb = (hex) => {
+    const cleanHex = hex.replace("#", "");
+
+    if (cleanHex.length !== 6) {
+      return null;
+    }
+
+    return {
+      r: parseInt(
+        cleanHex.substring(0, 2),
+        16
+      ),
+      g: parseInt(
+        cleanHex.substring(2, 4),
+        16
+      ),
+      b: parseInt(
+        cleanHex.substring(4, 6),
+        16
+      ),
+    };
   };
 
   /* ================= CLEAR CANVAS ================= */
@@ -375,11 +378,11 @@ function App() {
   const clearCanvas = () => {
     const canvas = canvasRef.current;
 
-    const context =
-      canvas.getContext("2d");
+    if (!canvas) return;
 
-    context.fillStyle =
-      "#ffffff";
+    const context = canvas.getContext("2d");
+
+    context.fillStyle = "#ffffff";
 
     context.fillRect(
       0,
@@ -394,19 +397,16 @@ function App() {
   /* ================= DOWNLOAD ================= */
 
   const downloadDrawing = () => {
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
-    const link =
-      document.createElement("a");
+    if (!canvas) return;
 
-    link.download =
-      "my-drawing.png";
+    const link = document.createElement("a");
+
+    link.download = "my-drawing.png";
 
     link.href =
-      canvas.toDataURL(
-        "image/png"
-      );
+      canvas.toDataURL("image/png");
 
     link.click();
   };
@@ -415,19 +415,13 @@ function App() {
 
   const increaseBrush = () => {
     setBrushSize((size) =>
-      Math.min(
-        size + 2,
-        50
-      )
+      Math.min(size + 2, 50)
     );
   };
 
   const decreaseBrush = () => {
     setBrushSize((size) =>
-      Math.max(
-        size - 2,
-        1
-      )
+      Math.max(size - 2, 1)
     );
   };
 
@@ -463,10 +457,7 @@ function App() {
 
           <div>
             <h1>Drawly</h1>
-
-            <p>
-              Creative Drawing Studio
-            </p>
+            <p>Creative Drawing Studio</p>
           </div>
 
         </div>
@@ -478,23 +469,15 @@ function App() {
             onClick={clearCanvas}
           >
             <FaTrash />
-
-            <span>
-              Clear
-            </span>
+            <span>Clear</span>
           </button>
 
           <button
             className="download-btn"
-            onClick={
-              downloadDrawing
-            }
+            onClick={downloadDrawing}
           >
             <FaDownload />
-
-            <span>
-              Download
-            </span>
+            <span>Download</span>
           </button>
 
         </div>
@@ -513,9 +496,7 @@ function App() {
 
           <div className="tool-group">
 
-            <h3>
-              TOOLS
-            </h3>
+            <h3>TOOLS</h3>
 
             {/* BRUSH */}
 
@@ -530,10 +511,7 @@ function App() {
               }
             >
               <FaBrush />
-
-              <span>
-                Brush
-              </span>
+              <span>Brush</span>
             </button>
 
             {/* ERASER */}
@@ -549,67 +527,23 @@ function App() {
               }
             >
               <FaEraser />
-
-              <span>
-                Eraser
-              </span>
+              <span>Eraser</span>
             </button>
 
-            {/* LINE */}
+            {/* FILL */}
 
             <button
               className={`tool-btn ${
-                tool === "line"
+                tool === "fill"
                   ? "active"
                   : ""
               }`}
               onClick={() =>
-                setTool("line")
+                setTool("fill")
               }
             >
-              <FaMinus />
-
-              <span>
-                Line
-              </span>
-            </button>
-
-            {/* RECTANGLE */}
-
-            <button
-              className={`tool-btn ${
-                tool === "rectangle"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setTool("rectangle")
-              }
-            >
-              <FaSquare />
-
-              <span>
-                Rectangle
-              </span>
-            </button>
-
-            {/* CIRCLE */}
-
-            <button
-              className={`tool-btn ${
-                tool === "circle"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setTool("circle")
-              }
-            >
-              <FaCircle />
-
-              <span>
-                Circle
-              </span>
+              <FaFillDrip />
+              <span>Fill</span>
             </button>
 
           </div>
@@ -620,9 +554,7 @@ function App() {
 
           <div className="tool-group">
 
-            <h3>
-              HISTORY
-            </h3>
+            <h3>HISTORY</h3>
 
             <div className="history-buttons">
 
@@ -634,7 +566,6 @@ function App() {
                 }
               >
                 <FaUndo />
-
                 Undo
               </button>
 
@@ -647,7 +578,6 @@ function App() {
                 }
               >
                 <FaRedo />
-
                 Redo
               </button>
 
@@ -663,7 +593,6 @@ function App() {
 
             <h3>
               <FaPalette />
-
               COLOR
             </h3>
 
@@ -717,9 +646,7 @@ function App() {
                 (presetColor) => (
 
                   <button
-                    key={
-                      presetColor
-                    }
+                    key={presetColor}
                     className={`preset-color ${
                       color ===
                       presetColor
@@ -753,16 +680,12 @@ function App() {
 
           <div className="tool-group">
 
-            <h3>
-              BRUSH SIZE
-            </h3>
+            <h3>BRUSH SIZE</h3>
 
             <div className="size-controls">
 
               <button
-                onClick={
-                  decreaseBrush
-                }
+                onClick={decreaseBrush}
                 disabled={
                   brushSize <= 1
                 }
@@ -776,16 +699,12 @@ function App() {
                   {brushSize}
                 </strong>
 
-                <span>
-                  px
-                </span>
+                <span>px</span>
 
               </div>
 
               <button
-                onClick={
-                  increaseBrush
-                }
+                onClick={increaseBrush}
                 disabled={
                   brushSize >= 50
                 }
@@ -822,13 +741,10 @@ function App() {
 
             <div>
 
-              <h2>
-                Your Canvas
-              </h2>
+              <h2>Your Canvas</h2>
 
               <p>
-                Express your creativity
-                freely
+                Express your creativity freely
               </p>
 
             </div>
@@ -837,7 +753,14 @@ function App() {
 
               <span className="status-dot"></span>
 
-              Ready to draw
+              {tool === "brush" &&
+                "Brush ready"}
+
+              {tool === "eraser" &&
+                "Eraser ready"}
+
+              {tool === "fill" &&
+                "Fill ready"}
 
             </div>
 
@@ -847,18 +770,10 @@ function App() {
 
             <canvas
               ref={canvasRef}
-              onPointerDown={
-                startDrawing
-              }
-              onPointerMove={
-                draw
-              }
-              onPointerUp={
-                stopDrawing
-              }
-              onPointerLeave={
-                stopDrawing
-              }
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerLeave={stopDrawing}
             />
 
           </div>
@@ -872,14 +787,8 @@ function App() {
       <footer>
 
         <p>
-          Built with{" "}
-          <span>
-            React
-          </span>{" "}
-          +{" "}
-          <span>
-            Vite
-          </span>
+          Built with <span>React</span> +{" "}
+          <span>Vite</span>
         </p>
 
         <p>

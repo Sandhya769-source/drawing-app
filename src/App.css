@@ -172,8 +172,8 @@ input {
   border: none;
   background: transparent;
 
-  padding: 10px 13px;
-  margin-bottom: 5px;
+  padding: 11px 13px;
+  margin-bottom: 6px;
 
   border-radius: 9px;
 
@@ -188,7 +188,14 @@ input {
 
   cursor: pointer;
 
-  transition: 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.tool-btn svg {
+  font-size: 14px;
 }
 
 .tool-btn:hover {
@@ -204,8 +211,8 @@ input {
     inset 3px 0 0 #6366f1;
 }
 
-.tool-btn svg {
-  font-size: 13px;
+.tool-btn:active {
+  transform: scale(0.98);
 }
 
 /* ================= DIVIDER ================= */
@@ -238,7 +245,6 @@ input {
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 6px;
 
   font-size: 11px;
@@ -553,6 +559,12 @@ canvas {
   touch-action: none;
 }
 
+/* ================= FILL TOOL CURSOR ================= */
+
+canvas:active {
+  cursor: crosshair;
+}
+
 /* ================= FOOTER ================= */
 
 footer {
@@ -578,7 +590,6 @@ footer span {
 /* ================= BUTTON EFFECTS ================= */
 
 .header-actions button:active,
-.tool-btn:active,
 .history-btn:active,
 .size-controls button:active {
   transform: scale(0.97);
@@ -587,7 +598,6 @@ footer span {
 /* ================= RESPONSIVE ================= */
 
 @media (max-width: 1000px) {
-
   .drawing-area {
     gap: 18px;
     padding: 20px;
@@ -612,7 +622,6 @@ footer span {
 }
 
 @media (max-width: 850px) {
-
   .drawing-area {
     flex-direction: column;
   }
@@ -636,7 +645,6 @@ footer span {
 }
 
 @media (max-width: 600px) {
-
   .header {
     height: 70px;
     padding: 0 15px;
@@ -686,10 +694,6 @@ footer span {
     border-radius: 13px;
   }
 
-  .tool-btn {
-    padding: 10px 12px;
-  }
-
   .preset-colors {
     grid-template-columns:
       repeat(6, 27px);
@@ -729,7 +733,6 @@ footer span {
 }
 
 @media (max-width: 400px) {
-
   .drawing-status {
     display: none;
   }
