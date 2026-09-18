@@ -68,7 +68,7 @@ function App() {
         newState,
       ];
 
-      // Keep maximum 30 states
+      // Maximum 30 history states
       if (updatedHistory.length > 30) {
         updatedHistory.shift();
       }
@@ -85,6 +85,9 @@ function App() {
 
   const restoreState = (imageData) => {
     const canvas = canvasRef.current;
+
+    if (!canvas || !imageData) return;
+
     const context = canvas.getContext("2d");
 
     const image = new Image();
@@ -194,7 +197,7 @@ function App() {
     saveState();
   };
 
-  /* ================= CLEAR ================= */
+  /* ================= CLEAR CANVAS ================= */
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
@@ -240,6 +243,23 @@ function App() {
     );
   };
 
+  /* ================= PRESET COLORS ================= */
+
+  const presetColors = [
+    "#111827",
+    "#ef4444",
+    "#f97316",
+    "#f59e0b",
+    "#eab308",
+    "#22c55e",
+    "#14b8a6",
+    "#06b6d4",
+    "#3b82f6",
+    "#6366f1",
+    "#8b5cf6",
+    "#ec4899",
+  ];
+
   return (
     <div className="app">
 
@@ -267,7 +287,7 @@ function App() {
             onClick={clearCanvas}
           >
             <FaTrash />
-            Clear
+            <span>Clear</span>
           </button>
 
           <button
@@ -275,13 +295,12 @@ function App() {
             onClick={downloadDrawing}
           >
             <FaDownload />
-            Download
+            <span>Download</span>
           </button>
 
         </div>
 
       </header>
-
 
       {/* ================= MAIN ================= */}
 
@@ -323,9 +342,7 @@ function App() {
 
           </div>
 
-
           <div className="divider"></div>
-
 
           {/* HISTORY */}
 
@@ -360,9 +377,7 @@ function App() {
 
           </div>
 
-
           <div className="divider"></div>
-
 
           {/* COLOR */}
 
@@ -378,11 +393,12 @@ function App() {
               <input
                 type="color"
                 value={color}
-                onChange={(event) =>
+                onChange={(event) => {
                   setColor(
                     event.target.value
-                  )
-                }
+                  );
+                  setTool("brush");
+                }}
               />
 
               <span>
@@ -390,6 +406,8 @@ function App() {
               </span>
 
             </div>
+
+            {/* CURRENT COLOR */}
 
             <div className="color-preview">
 
@@ -406,11 +424,45 @@ function App() {
 
             </div>
 
+            {/* PRESET COLORS */}
+
+            <div className="preset-title">
+              Preset Colors
+            </div>
+
+            <div className="preset-colors">
+
+              {presetColors.map(
+                (presetColor) => (
+
+                  <button
+                    key={presetColor}
+                    className={`preset-color ${
+                      color === presetColor
+                        ? "selected"
+                        : ""
+                    }`}
+                    style={{
+                      backgroundColor:
+                        presetColor,
+                    }}
+                    onClick={() => {
+                      setColor(
+                        presetColor
+                      );
+                      setTool("brush");
+                    }}
+                    aria-label={`Select color ${presetColor}`}
+                  />
+
+                )
+              )}
+
+            </div>
+
           </div>
 
-
           <div className="divider"></div>
-
 
           {/* BRUSH SIZE */}
 
@@ -422,6 +474,7 @@ function App() {
 
               <button
                 onClick={decreaseBrush}
+                disabled={brushSize <= 1}
               >
                 <FaMinus />
               </button>
@@ -438,6 +491,7 @@ function App() {
 
               <button
                 onClick={increaseBrush}
+                disabled={brushSize >= 50}
               >
                 <FaPlus />
               </button>
@@ -452,7 +506,9 @@ function App() {
               value={brushSize}
               onChange={(event) =>
                 setBrushSize(
-                  Number(event.target.value)
+                  Number(
+                    event.target.value
+                  )
                 )
               }
             />
@@ -460,7 +516,6 @@ function App() {
           </div>
 
         </aside>
-
 
         {/* ================= CANVAS ================= */}
 
@@ -488,7 +543,6 @@ function App() {
 
           </div>
 
-
           <div className="canvas-container">
 
             <canvas
@@ -504,7 +558,6 @@ function App() {
         </section>
 
       </main>
-
 
       {/* ================= FOOTER ================= */}
 
