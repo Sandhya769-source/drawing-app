@@ -19,7 +19,13 @@ function App() {
   const [brushSize, setBrushSize] = useState(5);
   const [tool, setTool] = useState("brush");
 
+  // History
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
   const isDrawing = useRef(false);
+
+  /* ================= INITIAL CANVAS ================= */
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -29,11 +35,109 @@ function App() {
     canvas.height = canvas.offsetHeight;
 
     context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    const initialState = canvas.toDataURL();
+
+    setHistory([initialState]);
+    setHistoryIndex(0);
   }, []);
+
+  /* ================= SAVE CANVAS STATE ================= */
+
+  const saveState = () => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) return;
+
+    const newState = canvas.toDataURL();
+
+    setHistory((previousHistory) => {
+      const trimmedHistory = previousHistory.slice(
+        0,
+        historyIndex + 1
+      );
+
+      const updatedHistory = [
+        ...trimmedHistory,
+        newState,
+      ];
+
+      // Keep maximum 30 states
+      if (updatedHistory.length > 30) {
+        updatedHistory.shift();
+      }
+
+      return updatedHistory;
+    });
+
+    setHistoryIndex((previousIndex) => {
+      return Math.min(previousIndex + 1, 29);
+    });
+  };
+
+  /* ================= RESTORE STATE ================= */
+
+  const restoreState = (imageData) => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+
+    const image = new Image();
+
+    image.onload = () => {
+      context.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      context.drawImage(
+        image,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    };
+
+    image.src = imageData;
+  };
+
+  /* ================= UNDO ================= */
+
+  const undo = () => {
+    if (historyIndex <= 0) return;
+
+    const newIndex = historyIndex - 1;
+
+    setHistoryIndex(newIndex);
+
+    restoreState(history[newIndex]);
+  };
+
+  /* ================= REDO ================= */
+
+  const redo = () => {
+    if (historyIndex >= history.length - 1) return;
+
+    const newIndex = historyIndex + 1;
+
+    setHistoryIndex(newIndex);
+
+    restoreState(history[newIndex]);
+  };
+
+  /* ================= CANVAS POSITION ================= */
 
   const getPosition = (event) => {
     const canvas = canvasRef.current;
+
     const rect = canvas.getBoundingClientRect();
 
     return {
@@ -41,6 +145,8 @@ function App() {
       y: event.clientY - rect.top,
     };
   };
+
+  /* ================= START DRAWING ================= */
 
   const startDrawing = (event) => {
     const canvas = canvasRef.current;
@@ -53,6 +159,8 @@ function App() {
     context.beginPath();
     context.moveTo(x, y);
   };
+
+  /* ================= DRAW ================= */
 
   const draw = (event) => {
     if (!isDrawing.current) return;
@@ -76,41 +184,71 @@ function App() {
     context.stroke();
   };
 
+  /* ================= STOP DRAWING ================= */
+
   const stopDrawing = () => {
+    if (!isDrawing.current) return;
+
     isDrawing.current = false;
+
+    saveState();
   };
+
+  /* ================= CLEAR ================= */
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
     context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    saveState();
   };
+
+  /* ================= DOWNLOAD ================= */
 
   const downloadDrawing = () => {
     const canvas = canvasRef.current;
 
     const link = document.createElement("a");
+
     link.download = "my-drawing.png";
+
     link.href = canvas.toDataURL("image/png");
 
     link.click();
   };
 
+  /* ================= BRUSH SIZE ================= */
+
   const increaseBrush = () => {
-    setBrushSize((size) => Math.min(size + 2, 50));
+    setBrushSize((size) =>
+      Math.min(size + 2, 50)
+    );
   };
 
   const decreaseBrush = () => {
-    setBrushSize((size) => Math.max(size - 2, 1));
+    setBrushSize((size) =>
+      Math.max(size - 2, 1)
+    );
   };
 
   return (
     <div className="app">
-      {/* Header */}
+
+      {/* ================= HEADER ================= */}
+
       <header className="header">
+
         <div className="logo-section">
+
           <div className="logo-icon">
             <FaBrush />
           </div>
@@ -119,30 +257,52 @@ function App() {
             <h1>Drawly</h1>
             <p>Creative Drawing Studio</p>
           </div>
+
         </div>
 
         <div className="header-actions">
-          <button className="clear-btn" onClick={clearCanvas}>
+
+          <button
+            className="clear-btn"
+            onClick={clearCanvas}
+          >
             <FaTrash />
             Clear
           </button>
 
-          <button className="download-btn" onClick={downloadDrawing}>
+          <button
+            className="download-btn"
+            onClick={downloadDrawing}
+          >
             <FaDownload />
             Download
           </button>
+
         </div>
+
       </header>
 
-      {/* Main Content */}
+
+      {/* ================= MAIN ================= */}
+
       <main className="drawing-area">
-        {/* Toolbar */}
+
+        {/* ================= TOOLBAR ================= */}
+
         <aside className="toolbar">
+
+          {/* TOOLS */}
+
           <div className="tool-group">
+
             <h3>TOOLS</h3>
 
             <button
-              className={`tool-btn ${tool === "brush" ? "active" : ""}`}
+              className={`tool-btn ${
+                tool === "brush"
+                  ? "active"
+                  : ""
+              }`}
               onClick={() => setTool("brush")}
             >
               <FaBrush />
@@ -150,62 +310,138 @@ function App() {
             </button>
 
             <button
-              className={`tool-btn ${tool === "eraser" ? "active" : ""}`}
+              className={`tool-btn ${
+                tool === "eraser"
+                  ? "active"
+                  : ""
+              }`}
               onClick={() => setTool("eraser")}
             >
               <FaEraser />
               <span>Eraser</span>
             </button>
+
           </div>
+
 
           <div className="divider"></div>
 
-          {/* Color */}
+
+          {/* HISTORY */}
+
           <div className="tool-group">
+
+            <h3>HISTORY</h3>
+
+            <div className="history-buttons">
+
+              <button
+                className="history-btn"
+                onClick={undo}
+                disabled={historyIndex <= 0}
+              >
+                <FaUndo />
+                Undo
+              </button>
+
+              <button
+                className="history-btn"
+                onClick={redo}
+                disabled={
+                  historyIndex >=
+                  history.length - 1
+                }
+              >
+                <FaRedo />
+                Redo
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div className="divider"></div>
+
+
+          {/* COLOR */}
+
+          <div className="tool-group">
+
             <h3>
               <FaPalette />
               COLOR
             </h3>
 
             <div className="color-picker-wrapper">
+
               <input
                 type="color"
                 value={color}
-                onChange={(event) => setColor(event.target.value)}
+                onChange={(event) =>
+                  setColor(
+                    event.target.value
+                  )
+                }
               />
 
-              <span>{color.toUpperCase()}</span>
+              <span>
+                {color.toUpperCase()}
+              </span>
+
             </div>
 
             <div className="color-preview">
+
               <div
                 className="preview-circle"
-                style={{ backgroundColor: color }}
+                style={{
+                  backgroundColor: color,
+                }}
               ></div>
 
-              <span>Current Color</span>
+              <span>
+                Current Color
+              </span>
+
             </div>
+
           </div>
+
 
           <div className="divider"></div>
 
-          {/* Brush Size */}
+
+          {/* BRUSH SIZE */}
+
           <div className="tool-group">
+
             <h3>BRUSH SIZE</h3>
 
             <div className="size-controls">
-              <button onClick={decreaseBrush}>
+
+              <button
+                onClick={decreaseBrush}
+              >
                 <FaMinus />
               </button>
 
               <div className="size-value">
-                <strong>{brushSize}</strong>
+
+                <strong>
+                  {brushSize}
+                </strong>
+
                 <span>px</span>
+
               </div>
 
-              <button onClick={increaseBrush}>
+              <button
+                onClick={increaseBrush}
+              >
                 <FaPlus />
               </button>
+
             </div>
 
             <input
@@ -215,27 +451,46 @@ function App() {
               max="50"
               value={brushSize}
               onChange={(event) =>
-                setBrushSize(Number(event.target.value))
+                setBrushSize(
+                  Number(event.target.value)
+                )
               }
             />
+
           </div>
+
         </aside>
 
-        {/* Canvas Section */}
+
+        {/* ================= CANVAS ================= */}
+
         <section className="canvas-section">
+
           <div className="canvas-header">
+
             <div>
+
               <h2>Your Canvas</h2>
-              <p>Express your creativity freely</p>
+
+              <p>
+                Express your creativity freely
+              </p>
+
             </div>
 
             <div className="drawing-status">
+
               <span className="status-dot"></span>
+
               Ready to draw
+
             </div>
+
           </div>
 
+
           <div className="canvas-container">
+
             <canvas
               ref={canvasRef}
               onPointerDown={startDrawing}
@@ -243,18 +498,29 @@ function App() {
               onPointerUp={stopDrawing}
               onPointerLeave={stopDrawing}
             />
+
           </div>
+
         </section>
+
       </main>
 
-      {/* Footer */}
+
+      {/* ================= FOOTER ================= */}
+
       <footer>
+
         <p>
-          Built with <span>React</span> + <span>Vite</span>
+          Built with <span>React</span> +{" "}
+          <span>Vite</span>
         </p>
 
-        <p>Draw • Create • Inspire</p>
+        <p>
+          Draw • Create • Inspire
+        </p>
+
       </footer>
+
     </div>
   );
 }
