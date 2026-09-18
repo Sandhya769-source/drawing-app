@@ -172,8 +172,8 @@ input {
   border: none;
   background: transparent;
 
-  padding: 11px 13px;
-  margin-bottom: 6px;
+  padding: 10px 13px;
+  margin-bottom: 5px;
 
   border-radius: 9px;
 
@@ -199,6 +199,13 @@ input {
 .tool-btn.active {
   background: #eef2ff;
   color: #6366f1;
+
+  box-shadow:
+    inset 3px 0 0 #6366f1;
+}
+
+.tool-btn svg {
+  font-size: 13px;
 }
 
 /* ================= DIVIDER ================= */
@@ -231,6 +238,7 @@ input {
   display: flex;
   align-items: center;
   justify-content: center;
+
   gap: 6px;
 
   font-size: 11px;
@@ -579,6 +587,7 @@ footer span {
 /* ================= RESPONSIVE ================= */
 
 @media (max-width: 1000px) {
+
   .drawing-area {
     gap: 18px;
     padding: 20px;
@@ -603,6 +612,7 @@ footer span {
 }
 
 @media (max-width: 850px) {
+
   .drawing-area {
     flex-direction: column;
   }
@@ -626,6 +636,7 @@ footer span {
 }
 
 @media (max-width: 600px) {
+
   .header {
     height: 70px;
     padding: 0 15px;
@@ -675,6 +686,10 @@ footer span {
     border-radius: 13px;
   }
 
+  .tool-btn {
+    padding: 10px 12px;
+  }
+
   .preset-colors {
     grid-template-columns:
       repeat(6, 27px);
@@ -714,6 +729,7 @@ footer span {
 }
 
 @media (max-width: 400px) {
+
   .drawing-status {
     display: none;
   }

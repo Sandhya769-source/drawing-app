@@ -9,6 +9,8 @@ import {
   FaPalette,
   FaPlus,
   FaMinus,
+  FaSquare,
+  FaCircle,
 } from "react-icons/fa";
 import "./App.css";
 
@@ -25,6 +27,10 @@ function App() {
 
   const isDrawing = useRef(false);
 
+  // Shape drawing
+  const startPoint = useRef(null);
+  const canvasSnapshot = useRef(null);
+
   /* ================= INITIAL CANVAS ================= */
 
   useEffect(() => {
@@ -35,6 +41,7 @@ function App() {
     canvas.height = canvas.offsetHeight;
 
     context.fillStyle = "#ffffff";
+
     context.fillRect(
       0,
       0,
@@ -58,26 +65,34 @@ function App() {
     const newState = canvas.toDataURL();
 
     setHistory((previousHistory) => {
-      const trimmedHistory = previousHistory.slice(
-        0,
-        historyIndex + 1
-      );
+      const currentIndex = historyIndex;
 
-      const updatedHistory = [
+      const trimmedHistory =
+        previousHistory.slice(
+          0,
+          currentIndex + 1
+        );
+
+      let updatedHistory = [
         ...trimmedHistory,
         newState,
       ];
 
-      // Maximum 30 history states
       if (updatedHistory.length > 30) {
-        updatedHistory.shift();
+        updatedHistory =
+          updatedHistory.slice(
+            updatedHistory.length - 30
+          );
       }
 
       return updatedHistory;
     });
 
     setHistoryIndex((previousIndex) => {
-      return Math.min(previousIndex + 1, 29);
+      return Math.min(
+        previousIndex + 1,
+        29
+      );
     });
   };
 
@@ -117,23 +132,34 @@ function App() {
   const undo = () => {
     if (historyIndex <= 0) return;
 
-    const newIndex = historyIndex - 1;
+    const newIndex =
+      historyIndex - 1;
 
     setHistoryIndex(newIndex);
 
-    restoreState(history[newIndex]);
+    restoreState(
+      history[newIndex]
+    );
   };
 
   /* ================= REDO ================= */
 
   const redo = () => {
-    if (historyIndex >= history.length - 1) return;
+    if (
+      historyIndex >=
+      history.length - 1
+    ) {
+      return;
+    }
 
-    const newIndex = historyIndex + 1;
+    const newIndex =
+      historyIndex + 1;
 
     setHistoryIndex(newIndex);
 
-    restoreState(history[newIndex]);
+    restoreState(
+      history[newIndex]
+    );
   };
 
   /* ================= CANVAS POSITION ================= */
@@ -141,7 +167,8 @@ function App() {
   const getPosition = (event) => {
     const canvas = canvasRef.current;
 
-    const rect = canvas.getBoundingClientRect();
+    const rect =
+      canvas.getBoundingClientRect();
 
     return {
       x: event.clientX - rect.left,
@@ -149,18 +176,119 @@ function App() {
     };
   };
 
+  /* ================= DRAW SHAPE ================= */
+
+  const drawShape = (
+    context,
+    start,
+    end
+  ) => {
+    const width =
+      end.x - start.x;
+
+    const height =
+      end.y - start.y;
+
+    context.strokeStyle = color;
+    context.lineWidth = brushSize;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+
+    context.beginPath();
+
+    /* ================= LINE ================= */
+
+    if (tool === "line") {
+      context.moveTo(
+        start.x,
+        start.y
+      );
+
+      context.lineTo(
+        end.x,
+        end.y
+      );
+
+      context.stroke();
+    }
+
+    /* ================= RECTANGLE ================= */
+
+    if (tool === "rectangle") {
+      context.rect(
+        start.x,
+        start.y,
+        width,
+        height
+      );
+
+      context.stroke();
+    }
+
+    /* ================= CIRCLE ================= */
+
+    if (tool === "circle") {
+      const radius =
+        Math.sqrt(
+          width * width +
+          height * height
+        );
+
+      context.arc(
+        start.x,
+        start.y,
+        radius,
+        0,
+        Math.PI * 2
+      );
+
+      context.stroke();
+    }
+
+    context.closePath();
+  };
+
   /* ================= START DRAWING ================= */
 
   const startDrawing = (event) => {
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
+    const context =
+      canvas.getContext("2d");
 
-    const { x, y } = getPosition(event);
+    const position =
+      getPosition(event);
 
     isDrawing.current = true;
 
+    startPoint.current = position;
+
+    /*
+      Save the current canvas before
+      drawing a shape.
+    */
+
+    if (
+      tool === "line" ||
+      tool === "rectangle" ||
+      tool === "circle"
+    ) {
+      canvasSnapshot.current =
+        context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+      return;
+    }
+
     context.beginPath();
-    context.moveTo(x, y);
+
+    context.moveTo(
+      position.x,
+      position.y
+    );
   };
 
   /* ================= DRAW ================= */
@@ -169,21 +297,62 @@ function App() {
     if (!isDrawing.current) return;
 
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
+    const context =
+      canvas.getContext("2d");
 
-    const { x, y } = getPosition(event);
+    const position =
+      getPosition(event);
+
+    /* ================= SHAPES ================= */
+
+    if (
+      tool === "line" ||
+      tool === "rectangle" ||
+      tool === "circle"
+    ) {
+      /*
+        Restore original canvas
+        before drawing the preview.
+      */
+
+      if (canvasSnapshot.current) {
+        context.putImageData(
+          canvasSnapshot.current,
+          0,
+          0
+        );
+      }
+
+      drawShape(
+        context,
+        startPoint.current,
+        position
+      );
+
+      return;
+    }
+
+    /* ================= BRUSH / ERASER ================= */
 
     context.lineWidth = brushSize;
+
     context.lineCap = "round";
+
     context.lineJoin = "round";
 
     if (tool === "eraser") {
-      context.strokeStyle = "#ffffff";
+      context.strokeStyle =
+        "#ffffff";
     } else {
-      context.strokeStyle = color;
+      context.strokeStyle =
+        color;
     }
 
-    context.lineTo(x, y);
+    context.lineTo(
+      position.x,
+      position.y
+    );
+
     context.stroke();
   };
 
@@ -194,6 +363,10 @@ function App() {
 
     isDrawing.current = false;
 
+    canvasSnapshot.current = null;
+
+    startPoint.current = null;
+
     saveState();
   };
 
@@ -201,9 +374,12 @@ function App() {
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
 
-    context.fillStyle = "#ffffff";
+    const context =
+      canvas.getContext("2d");
+
+    context.fillStyle =
+      "#ffffff";
 
     context.fillRect(
       0,
@@ -218,13 +394,19 @@ function App() {
   /* ================= DOWNLOAD ================= */
 
   const downloadDrawing = () => {
-    const canvas = canvasRef.current;
+    const canvas =
+      canvasRef.current;
 
-    const link = document.createElement("a");
+    const link =
+      document.createElement("a");
 
-    link.download = "my-drawing.png";
+    link.download =
+      "my-drawing.png";
 
-    link.href = canvas.toDataURL("image/png");
+    link.href =
+      canvas.toDataURL(
+        "image/png"
+      );
 
     link.click();
   };
@@ -233,13 +415,19 @@ function App() {
 
   const increaseBrush = () => {
     setBrushSize((size) =>
-      Math.min(size + 2, 50)
+      Math.min(
+        size + 2,
+        50
+      )
     );
   };
 
   const decreaseBrush = () => {
     setBrushSize((size) =>
-      Math.max(size - 2, 1)
+      Math.max(
+        size - 2,
+        1
+      )
     );
   };
 
@@ -275,7 +463,10 @@ function App() {
 
           <div>
             <h1>Drawly</h1>
-            <p>Creative Drawing Studio</p>
+
+            <p>
+              Creative Drawing Studio
+            </p>
           </div>
 
         </div>
@@ -287,15 +478,23 @@ function App() {
             onClick={clearCanvas}
           >
             <FaTrash />
-            <span>Clear</span>
+
+            <span>
+              Clear
+            </span>
           </button>
 
           <button
             className="download-btn"
-            onClick={downloadDrawing}
+            onClick={
+              downloadDrawing
+            }
           >
             <FaDownload />
-            <span>Download</span>
+
+            <span>
+              Download
+            </span>
           </button>
 
         </div>
@@ -314,7 +513,11 @@ function App() {
 
           <div className="tool-group">
 
-            <h3>TOOLS</h3>
+            <h3>
+              TOOLS
+            </h3>
+
+            {/* BRUSH */}
 
             <button
               className={`tool-btn ${
@@ -322,11 +525,18 @@ function App() {
                   ? "active"
                   : ""
               }`}
-              onClick={() => setTool("brush")}
+              onClick={() =>
+                setTool("brush")
+              }
             >
               <FaBrush />
-              <span>Brush</span>
+
+              <span>
+                Brush
+              </span>
             </button>
+
+            {/* ERASER */}
 
             <button
               className={`tool-btn ${
@@ -334,10 +544,72 @@ function App() {
                   ? "active"
                   : ""
               }`}
-              onClick={() => setTool("eraser")}
+              onClick={() =>
+                setTool("eraser")
+              }
             >
               <FaEraser />
-              <span>Eraser</span>
+
+              <span>
+                Eraser
+              </span>
+            </button>
+
+            {/* LINE */}
+
+            <button
+              className={`tool-btn ${
+                tool === "line"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setTool("line")
+              }
+            >
+              <FaMinus />
+
+              <span>
+                Line
+              </span>
+            </button>
+
+            {/* RECTANGLE */}
+
+            <button
+              className={`tool-btn ${
+                tool === "rectangle"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setTool("rectangle")
+              }
+            >
+              <FaSquare />
+
+              <span>
+                Rectangle
+              </span>
+            </button>
+
+            {/* CIRCLE */}
+
+            <button
+              className={`tool-btn ${
+                tool === "circle"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setTool("circle")
+              }
+            >
+              <FaCircle />
+
+              <span>
+                Circle
+              </span>
             </button>
 
           </div>
@@ -348,16 +620,21 @@ function App() {
 
           <div className="tool-group">
 
-            <h3>HISTORY</h3>
+            <h3>
+              HISTORY
+            </h3>
 
             <div className="history-buttons">
 
               <button
                 className="history-btn"
                 onClick={undo}
-                disabled={historyIndex <= 0}
+                disabled={
+                  historyIndex <= 0
+                }
               >
                 <FaUndo />
+
                 Undo
               </button>
 
@@ -370,6 +647,7 @@ function App() {
                 }
               >
                 <FaRedo />
+
                 Redo
               </button>
 
@@ -385,6 +663,7 @@ function App() {
 
             <h3>
               <FaPalette />
+
               COLOR
             </h3>
 
@@ -397,6 +676,7 @@ function App() {
                   setColor(
                     event.target.value
                   );
+
                   setTool("brush");
                 }}
               />
@@ -414,7 +694,8 @@ function App() {
               <div
                 className="preview-circle"
                 style={{
-                  backgroundColor: color,
+                  backgroundColor:
+                    color,
                 }}
               ></div>
 
@@ -436,9 +717,12 @@ function App() {
                 (presetColor) => (
 
                   <button
-                    key={presetColor}
+                    key={
+                      presetColor
+                    }
                     className={`preset-color ${
-                      color === presetColor
+                      color ===
+                      presetColor
                         ? "selected"
                         : ""
                     }`}
@@ -450,6 +734,7 @@ function App() {
                       setColor(
                         presetColor
                       );
+
                       setTool("brush");
                     }}
                     aria-label={`Select color ${presetColor}`}
@@ -468,13 +753,19 @@ function App() {
 
           <div className="tool-group">
 
-            <h3>BRUSH SIZE</h3>
+            <h3>
+              BRUSH SIZE
+            </h3>
 
             <div className="size-controls">
 
               <button
-                onClick={decreaseBrush}
-                disabled={brushSize <= 1}
+                onClick={
+                  decreaseBrush
+                }
+                disabled={
+                  brushSize <= 1
+                }
               >
                 <FaMinus />
               </button>
@@ -485,13 +776,19 @@ function App() {
                   {brushSize}
                 </strong>
 
-                <span>px</span>
+                <span>
+                  px
+                </span>
 
               </div>
 
               <button
-                onClick={increaseBrush}
-                disabled={brushSize >= 50}
+                onClick={
+                  increaseBrush
+                }
+                disabled={
+                  brushSize >= 50
+                }
               >
                 <FaPlus />
               </button>
@@ -525,10 +822,13 @@ function App() {
 
             <div>
 
-              <h2>Your Canvas</h2>
+              <h2>
+                Your Canvas
+              </h2>
 
               <p>
-                Express your creativity freely
+                Express your creativity
+                freely
               </p>
 
             </div>
@@ -547,10 +847,18 @@ function App() {
 
             <canvas
               ref={canvasRef}
-              onPointerDown={startDrawing}
-              onPointerMove={draw}
-              onPointerUp={stopDrawing}
-              onPointerLeave={stopDrawing}
+              onPointerDown={
+                startDrawing
+              }
+              onPointerMove={
+                draw
+              }
+              onPointerUp={
+                stopDrawing
+              }
+              onPointerLeave={
+                stopDrawing
+              }
             />
 
           </div>
@@ -564,8 +872,14 @@ function App() {
       <footer>
 
         <p>
-          Built with <span>React</span> +{" "}
-          <span>Vite</span>
+          Built with{" "}
+          <span>
+            React
+          </span>{" "}
+          +{" "}
+          <span>
+            Vite
+          </span>
         </p>
 
         <p>
